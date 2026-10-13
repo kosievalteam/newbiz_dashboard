@@ -157,6 +157,7 @@
         <input class="pc-search" id="list-q" type="search" placeholder="사업명·부처·메모로 찾기" aria-label="협의건 검색">
         <div class="pc-chips" id="f-stage" role="group" aria-label="진행상태"></div>
         <span class="pc-count" id="list-count"></span>
+        <button class="pc-chip" id="list-csv" type="button" hidden>CSV 내려받기</button>
       </div>
       <div class="pc-tablebox" style="max-height:34rem">
         <table class="pc-table" id="tb-list" data-source="sims_2026" data-row-key="협의번호">
@@ -424,6 +425,21 @@
     draw();
   })));
   document.getElementById('list-q').addEventListener('input', () => draw());
+
+  // 일정표 CSV 내려받기: 지금 화면에 걸러진 행을 그대로 받는다 (독립 웹페이지에서만 동작)
+  let listRows = [];
+  const CSV_COLS = [['협의번호', '협의번호'], ['검토자', '검토담당자'], ['구분', '구분'], ['기관', '부처'], ['분야', '신청분야'], ['신청유형', '신청유형'], ['사업명', '사업명'], ['진행상태', '진행단계'], ['경과일', '경과일'], ['접수일', '접수일'], ['접수완료일', '접수완료일'], ['접수 처리기간(일)', '접수대기일수'], ['초안 작성일', '초안작성일'], ['검토완료일', '검토완료일'], ['검토일수', '검토일수'], ['결과서 수령일', '결과서수령일'], ['메모', '메모'], ['메모 확인일', '메모확인일'], ['반려사유', '반려사유']];
+  const csvBtn = document.getElementById('list-csv');
+  if (window.__dashLoad) csvBtn.hidden = false;
+  csvBtn.addEventListener('click', () => {
+    const esc = (v) => { const s = v == null ? '' : String(v); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    const lines = [CSV_COLS.map((c) => esc(c[0])).join(',')].concat(listRows.map((r) => CSV_COLS.map((c) => esc(r[c[1]])).join(',')));
+    const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    const n = new Date(), p2 = (x) => String(x).padStart(2, '0');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = '협의건_일정표_' + n.getFullYear() + p2(n.getMonth() + 1) + p2(n.getDate()) + '.csv';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  });
   document.getElementById('od-q').addEventListener('input', () => draw());
 
   function draw() {
@@ -518,7 +534,8 @@
         (stage === '전체' || (stage === '진행 중' ? OPEN.includes(r['진행단계']) : stage === '메모 있음' ? !!r['메모'] : r['진행단계'] === stage)) &&
         (!q || [r['사업명'], r['부처'], r['협의번호'], r['검토담당자'], r['신청분야'], r['메모']].join(' ').toLowerCase().includes(q)));
       const body = document.querySelector('#tb-list tbody'); body.textContent = '';
-      for (const r of sortRows('tb-list', rows.map((r) => ({ ...r, 경과일: ageOf(r) })))) {
+      listRows = sortRows('tb-list', rows.map((r) => ({ ...r, 경과일: ageOf(r) })));
+      for (const r of listRows) {
         const tr = document.createElement('tr');
         for (const [k, cls] of [['협의번호', 'nowrap'], ['검토담당자', 'nowrap'], ['구분', 'nowrap pc-hide-sm'], ['부처', 'nowrap'], ['신청분야', 'nowrap'], ['사업명', 'wrap']]) { const td = document.createElement('td'); td.className = cls; td.textContent = r[k]; tr.appendChild(td); }
         let td = document.createElement('td'); const pill = document.createElement('span');
