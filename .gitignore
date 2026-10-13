@@ -1,0 +1,15 @@
+# 내부 자료와 개인 정보가 든 원본은 올리지 않는다
+sims_downloads/
+sims_downloads.zip
+sims_detail/
+sims_browser_profile/
+dashboard_data/
+_txt/
+*.hwp
+*.hwpx
+*.xlsx
+*.zip
+*.log
+__pycache__/
+예산_보완내역_*.md
+.claude/

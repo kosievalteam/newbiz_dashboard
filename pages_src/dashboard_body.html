@@ -1,0 +1,569 @@
+<style>
+.pc{display:flex;flex-direction:column;gap:var(--cds-gap-xl);font-family:var(--font-anthropic-sans)}
+.pc-head{display:flex;flex-direction:column;gap:var(--cds-gap-xs)}
+.pc-head h1{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);margin:0;text-wrap:balance}
+.pc-take{margin:0;font-size:var(--cds-font-size-body);max-width:72ch;line-height:1.55}
+.pc .pc-take b{font-weight:600;font-variant-numeric:tabular-nums}
+.pc-note{margin:0;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);line-height:1.5}
+.pc-sec{display:flex;flex-direction:column;gap:var(--cds-gap-md)}
+.pc-sec>h2{margin:0;font-size:var(--cds-font-size-heading);font-weight:var(--cds-font-weight-medium)}
+.pc-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,8.5rem),1fr));gap:var(--cds-gap-md)}
+.pc-kpi{background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);padding:var(--cds-pad-md);display:flex;flex-direction:column;gap:var(--cds-gap-xs);min-width:0}
+.pc-kpi .lbl{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.pc-kpi .val{display:flex;align-items:baseline;gap:2px;min-height:2.4rem}
+.pc-kpi .num{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);font-variant-numeric:tabular-nums;line-height:1.1}
+.pc-kpi .unit{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.pc-kpi .sub{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.pc-dot{display:inline-block;width:.55rem;height:.55rem;border-radius:50%;margin-right:4px;vertical-align:middle}
+.pc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:var(--cds-gap-md)}
+.pc-card{position:relative;background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);padding:var(--cds-pad-lg);display:flex;flex-direction:column;gap:var(--cds-gap-sm);min-width:0}
+.pc-card h3{margin:0;font-size:var(--cds-font-size-heading);font-weight:var(--cds-font-weight-medium)}
+.pc-card-top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--cds-gap-sm)}
+.pc-chart{min-height:12rem;width:100%}
+.pc-chart.tall{min-height:22rem}
+.pc-legend{display:flex;flex-wrap:wrap;gap:var(--cds-gap-md);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.pc-legend span{display:inline-flex;align-items:center;gap:4px}
+.pc-legend i{width:.7rem;height:.7rem;border-radius:3px;display:inline-block}
+.pc-chips{display:flex;flex-wrap:wrap;gap:var(--cds-gap-xs)}
+.pc-chip{font:inherit;font-size:var(--cds-font-size-caption);border:1px solid var(--color-border-line);background:var(--color-bg);color:var(--color-fg);border-radius:999px;padding:3px 10px;cursor:pointer}
+.pc-chip[aria-pressed="true"]{background:var(--color-fg);color:var(--color-bg);border-color:var(--color-fg)}
+.pc-chip:focus-visible,.pc-th:focus-visible,.pc-search:focus-visible{outline:2px solid var(--color-fg);outline-offset:2px}
+.pc-tip{position:absolute;pointer-events:none;background:var(--cds-surface-popover);border:1px solid var(--cds-border);border-radius:var(--cds-radius);box-shadow:var(--cds-shadow-popover);padding:var(--cds-pad-xs) var(--cds-pad-sm);font-size:var(--cds-font-size-caption);line-height:1.5;z-index:5;white-space:nowrap}
+.pc-tip .t{color:var(--cds-text-secondary)}
+.pc-tools{display:flex;flex-wrap:wrap;gap:var(--cds-gap-sm);align-items:center}
+.pc-search{font:inherit;font-size:var(--cds-font-size-body);padding:6px 10px;border:1px solid var(--color-border-line);border-radius:var(--cds-radius);background:var(--color-bg);color:var(--color-fg);min-width:0;flex:1 1 14rem;max-width:24rem}
+.pc-count{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.pc-tablebox{max-height:28rem;overflow:auto;border-top:1px solid var(--color-border-line)}
+.pc-table{width:100%;border-collapse:collapse;font-size:var(--cds-font-size-body);font-variant-numeric:tabular-nums}
+.pc-table th{position:sticky;top:0;background:var(--color-panel);text-align:left;font-weight:var(--cds-font-weight-medium);padding:0;border-bottom:1px solid var(--color-border-line);z-index:1}
+.pc-th{font:inherit;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);background:none;border:0;padding:8px 10px;cursor:pointer;width:100%;text-align:left;white-space:nowrap}
+.pc-table td{padding:7px 10px;border-bottom:1px solid var(--color-border-line);vertical-align:top}
+.pc-table td.wrap{min-width:14rem}
+.pc-table td.nowrap{white-space:nowrap}
+.pc-pill{display:inline-block;font-size:var(--cds-font-size-caption);padding:1px 8px;border-radius:999px;border:1px solid currentColor;white-space:nowrap}
+.pc-pill.ok{color:var(--color-ok)}
+.pc-pill.rec{color:var(--color-fg)}
+.pc-pill.warn{color:var(--color-warn)}
+.pc-pill.wait{color:var(--color-fg-muted);border-style:dashed}
+.pc-fail{display:flex;align-items:center;justify-content:center;gap:6px;min-height:inherit;height:100%;color:var(--color-fg-muted);font-size:var(--cds-font-size-caption)}
+.pc-fail::before{content:"";width:.375rem;height:.375rem;border-radius:50%;background:var(--color-bad)}
+@media (max-width:640px){.pc-hide-sm{display:none}}
+[data-dash-source-state=empty]{color:transparent}
+[data-dash-source-state=refreshing]{opacity:.5;transition:opacity var(--cds-dur-slow)}
+</style><style>
+.pc-kpis.stage .pc-kpi{border-top:3px solid var(--pc-c, var(--color-border-line))}
+.pc-flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr));gap:var(--cds-gap-md)}
+.pc-step{display:flex;flex-direction:column;gap:2px;padding:var(--cds-pad-md);background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--cds-radius)}
+.pc-step .lbl{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.pc-step .num{font-family:var(--font-anthropic-serif);font-size:var(--cds-font-size-title);font-variant-numeric:tabular-nums}
+.pc-step .sub{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.pc-age{font-variant-numeric:tabular-nums;white-space:nowrap}
+.pc-age.warn{color:var(--color-warn);font-weight:600}
+.pc-age.bad{color:var(--color-bad);font-weight:600}
+.pc-memo{max-width:24rem;white-space:normal}
+.pc-memo small{display:block;color:var(--color-fg-muted)}
+.pc-table tr.sel td{background:var(--color-bg)}
+.pc-rowbtn{cursor:pointer}
+.pc-filters{display:flex;flex-wrap:wrap;gap:var(--cds-gap-md);align-items:center}
+.pc-filters .lab{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.pc-table td.num{text-align:right;white-space:nowrap}
+.pc-table td.ctr,.pc-table th.ctr .pc-th{text-align:center}
+.pc-asof{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.pc-od{display:inline-block;min-width:3.2rem;padding:1px 6px;border-radius:4px;font-size:var(--cds-font-size-caption);font-variant-numeric:tabular-nums;border:1px solid var(--color-border-line);background:var(--color-bg)}
+.pc-od.last{border-color:var(--color-fg);font-weight:600}
+</style>
+
+<div class="pc">
+  <header class="pc-head">
+    <h1 id="top">사전협의 검토현황 2026</h1>
+    <p class="pc-take" id="takeaway">2026년 협의 <b class="dash-skeleton" data-source="s_kpi" data-field="값" data-where="구분=전체&amp;항목=전체">—</b>건 가운데 접수완료 후 아직 끝나지 않은 건은 <b class="dash-skeleton" data-source="s_kpi" data-field="값" data-where="구분=전체&amp;항목=진행 중">—</b>건입니다. 진행 중 건이 가장 많은 검토자는 <b id="tk-who" class="dash-skeleton" data-source="s_rev" data-field="검토담당자" data-row="0">—</b>이고, 접수완료 후 가장 오래된 건은 오늘 기준 <b id="tk-age" class="dash-skeleton" data-source="sims_2026">—</b>일째입니다.</p>
+    <p class="pc-asof">SIMS 수집 시각 <span id="asof-v" class="dash-skeleton" data-source="sims_2026" data-field="수집시각" data-row="0">—</span> · 사전협의목록 전체(중앙부처·지자체) 기준</p>
+  </header>
+
+  <div class="pc-filters" id="filters">
+    <span class="lab">구분</span><div class="pc-chips" id="f-div" role="group" aria-label="구분"></div>
+    <span class="lab">분야</span><div class="pc-chips" id="f-field" role="group" aria-label="분야"></div>
+    <span class="lab">검토자</span><div class="pc-chips" id="f-rev" role="group" aria-label="검토자"></div>
+  </div>
+
+  <section class="pc-sec" id="sec-stage">
+    <h2 id="stage-title">진행상태별 건수</h2>
+    <div class="pc-kpis stage" id="stage-tiles"></div>
+    <div class="pc-flow" id="stage-days"></div>
+    <p class="pc-note">진행상태는 SIMS 목록의 명칭 그대로입니다. 소요일은 달력일 중앙값이고, 접수 처리기간은 접수대기에서 접수완료까지입니다. 경과일은 접수완료일부터 오늘(대시보드를 연 날)까지의 날수이며, 접수완료·검토진행·재협의 단계에 있는 건에만 붙습니다. 30일 이상은 주황, 60일 이상은 빨강입니다.</p>
+  </section>
+
+  <section class="pc-sec" id="sec-rev">
+    <h2>검토자별 과업 현황</h2>
+    <div class="pc-card" id="card-rev">
+      <p class="pc-note">행을 누르면 아래 차트와 표가 그 검토자로 바뀝니다.</p>
+      <div class="pc-tablebox" style="max-height:none">
+        <table class="pc-table" id="tb-rev" data-source="s_rev" data-row-key="검토담당자">
+          <thead><tr>
+            <th data-field="검토담당자"><button class="pc-th" type="button" data-k="검토담당자">검토자</button></th>
+            <th data-field="전체"><button class="pc-th" type="button" data-k="전체">전체</button></th>
+            <th data-field="진행중"><button class="pc-th" type="button" data-k="진행중">진행 중</button></th>
+            <th data-field="접수완료"><button class="pc-th" type="button" data-k="접수완료">접수완료</button></th>
+            <th data-field="검토진행"><button class="pc-th" type="button" data-k="검토진행">검토진행</button></th>
+            <th data-field="협의완료"><button class="pc-th" type="button" data-k="협의완료">협의완료</button></th>
+            <th data-field="접수반려" class="pc-hide-sm"><button class="pc-th" type="button" data-k="접수반려">접수반려</button></th>
+            <th data-field="접수처리중앙값" class="pc-hide-sm"><button class="pc-th" type="button" data-k="접수처리중앙값">접수 처리기간 중앙값</button></th>
+            <th data-field="검토일수중앙값"><button class="pc-th" type="button" data-k="검토일수중앙값">검토일수 중앙값</button></th>
+            <th><button class="pc-th" type="button" data-k="최장경과일">최장 경과일</button></th>
+            <th data-field="메모건수" class="pc-hide-sm"><button class="pc-th" type="button" data-k="메모건수">메모</button></th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="pc-card" id="card-field">
+      <h3>분야별 건수</h3>
+      <p class="pc-note">신청분야별 진행상태입니다. 행을 누르면 일정표가 그 분야로 바뀝니다.</p>
+      <div class="pc-tablebox" style="max-height:none">
+        <table class="pc-table" id="tb-field" data-source="s_field" data-row-key="신청분야">
+          <thead><tr>
+            <th data-field="신청분야"><button class="pc-th" type="button" data-k="신청분야">분야</button></th>
+            <th data-field="전체"><button class="pc-th" type="button" data-k="전체">전체</button></th>
+            <th data-field="진행중"><button class="pc-th" type="button" data-k="진행중">진행 중</button></th>
+            <th data-field="접수완료"><button class="pc-th" type="button" data-k="접수완료">접수완료</button></th>
+            <th data-field="검토진행"><button class="pc-th" type="button" data-k="검토진행">검토진행</button></th>
+            <th data-field="협의완료"><button class="pc-th" type="button" data-k="협의완료">협의완료</button></th>
+            <th data-field="접수반려"><button class="pc-th" type="button" data-k="접수반려">접수반려</button></th>
+            <th data-field="담당자"><button class="pc-th" type="button" data-k="담당자">주 담당자</button></th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="pc-grid">
+      <div class="pc-card" id="card-month">
+        <h3 id="month-title">월별 처리 흐름</h3>
+        <p class="pc-note">달마다 접수(신청)된 건, 검토의견을 등록한 건, 결과서를 등록한 건의 수입니다.</p>
+        <div class="pc-legend" id="month-legend"></div>
+        <div class="pc-chart dash-skeleton" id="ch-month" data-source="s_month"></div>
+      </div>
+      <div class="pc-card" id="card-strip">
+        <h3>검토자별 검토일수</h3>
+        <p class="pc-note">점 하나가 협의건 하나입니다. 접수완료부터 검토의견 등록까지 걸린 날수이며, 세로선은 중앙값입니다.</p>
+        <div class="pc-chart dash-skeleton" id="ch-strip" data-source="sims_2026 s_rev"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pc-sec" id="sec-list">
+    <h2>협의건 일정표</h2>
+    <div class="pc-card" id="card-list">
+      <div class="pc-tools">
+        <input class="pc-search" id="list-q" type="search" placeholder="사업명·부처·메모로 찾기" aria-label="협의건 검색">
+        <div class="pc-chips" id="f-stage" role="group" aria-label="진행상태"></div>
+        <span class="pc-count" id="list-count"></span>
+      </div>
+      <div class="pc-tablebox" style="max-height:34rem">
+        <table class="pc-table" id="tb-list" data-source="sims_2026" data-row-key="협의번호">
+          <thead><tr>
+            <th data-field="협의번호"><button class="pc-th" type="button" data-k="협의번호">협의번호</button></th>
+            <th data-field="검토담당자"><button class="pc-th" type="button" data-k="검토담당자">검토자</button></th>
+            <th data-field="구분" class="pc-hide-sm"><button class="pc-th" type="button" data-k="구분">구분</button></th>
+            <th data-field="부처"><button class="pc-th" type="button" data-k="부처">기관</button></th>
+            <th data-field="신청분야"><button class="pc-th" type="button" data-k="신청분야">분야</button></th>
+            <th data-field="사업명"><button class="pc-th" type="button" data-k="사업명">사업명</button></th>
+            <th data-field="진행단계"><button class="pc-th" type="button" data-k="진행단계">진행상태</button></th>
+            <th><button class="pc-th" type="button" data-k="경과일">경과일</button></th>
+            <th data-field="접수일"><button class="pc-th" type="button" data-k="접수일">접수</button></th>
+            <th data-field="접수완료일"><button class="pc-th" type="button" data-k="접수완료일">접수완료</button></th>
+            <th data-field="접수대기일수"><button class="pc-th" type="button" data-k="접수대기일수">접수 처리기간</button></th>
+            <th data-field="검토완료일"><button class="pc-th" type="button" data-k="검토완료일">검토완료</button></th>
+            <th data-field="결과서수령일"><button class="pc-th" type="button" data-k="결과서수령일">결과서 수령</button></th>
+            <th data-field="메모"><button class="pc-th" type="button" data-k="메모">메모</button></th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="pc-note">접수는 신청일시, 접수완료는 접수대기에서 접수완료로 바뀐 일시, 접수 처리기간은 그 사이 날수, 검토완료는 검토의견 등록일시, 결과서 수령은 검토결과(결과서) 등록일시입니다. 메모 날짜는 SIMS가 제공하지 않아, 수집할 때 메모가 처음 보이거나 바뀐 날을 적습니다.</p>
+    </div>
+  </section>
+
+  <section class="pc-sec" id="sec-od">
+    <h2>원드라이브 단계별 업로드</h2>
+    <div class="pc-card" id="card-od">
+      <div class="pc-tools">
+        <input class="pc-search" id="od-q" type="search" placeholder="사업명·협의번호로 찾기" aria-label="원드라이브 검색">
+        <span class="pc-count" id="od-count"></span>
+      </div>
+      <p class="pc-note">'26년 검토의견서 폴더의 ①~⑤ 단계 폴더에 협의건별로 파일이 마지막으로 올라온 날입니다(한국 시각). 굵은 테두리는 그 건이 도달한 가장 뒤 단계입니다. 담당자 폴더가 없는 파일은 SIMS 검토담당자로 채웠습니다.</p>
+      <div class="pc-tablebox" style="max-height:30rem">
+        <table class="pc-table" id="tb-od" data-source="od_matrix" data-row-key="협의번호">
+          <thead><tr>
+            <th data-field="협의번호"><button class="pc-th" type="button" data-k="협의번호">협의번호</button></th>
+            <th data-field="담당자"><button class="pc-th" type="button" data-k="담당자">담당자</button></th>
+            <th data-field="사업명"><button class="pc-th" type="button" data-k="사업명">사업명</button></th>
+            <th data-field="초안"><button class="pc-th" type="button" data-k="초안">① 초안</button></th>
+            <th data-field="검토본"><button class="pc-th" type="button" data-k="검토본">② 검토본</button></th>
+            <th data-field="수정본"><button class="pc-th" type="button" data-k="수정본">③ 수정본</button></th>
+            <th data-field="최종"><button class="pc-th" type="button" data-k="최종">④ 최종(팀장)</button></th>
+            <th data-field="시스템업로드"><button class="pc-th" type="button" data-k="시스템업로드">⑤ 시스템 업로드</button></th>
+            <th data-field="SIMS단계" class="pc-hide-sm"><button class="pc-th" type="button" data-k="SIMS단계">SIMS 상태</button></th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  const ORDER = ['접수대기', '접수완료', '검토진행', '재협의대기', '재협의진행', '협의완료(원안동의)', '협의완료(권고안제시)', '재협의완료', '심의회조정', '접수반려'];
+  const OPEN = ['접수완료', '검토진행', '재협의대기', '재협의진행'];
+  const DONE = ['협의완료(원안동의)', '협의완료(권고안제시)', '재협의완료'];
+  const fmt = d3.format(',');
+  const f1 = d3.format('.1f');
+  const num = (v) => (v === '' || v == null ? null : Number(v));
+  const stageColor = (s) => ({ '접수대기': dash.colors[2], '접수완료': dash.colors[1], '검토진행': dash.colors[3], '재협의대기': dash.colors[4], '재협의진행': dash.colors[4], '협의완료(원안동의)': dash.colors[0], '협의완료(권고안제시)': dash.colors[0], '재협의완료': dash.colors[5] }[s] || 'var(--cds-chart-muted)');
+
+  dash.calc('s_kpi', {
+    inputs: ['sims_2026'],
+    title: '2026년 진행상태별 현황',
+    description: '구분(전체·중앙부처·지자체)별 진행상태 건수, 접수완료 후 진행 중 건수, 단계별 소요일 중앙값(달력일).',
+    fn: (sims_2026) => {
+      const out = [];
+      for (const g of ['전체', ...new Set(sims_2026.map((r) => r['구분']))]) {
+        const v = g === '전체' ? sims_2026 : sims_2026.filter((r) => r['구분'] === g);
+        const med = (k) => { const a = v.map((r) => r[k]).filter((x) => x !== '' && x != null).map(Number); return a.length ? Math.round(d3.median(a) * 10) / 10 : null; };
+        const open = v.filter((r) => ['접수완료', '검토진행', '재협의대기', '재협의진행'].includes(r['진행단계']));
+        out.push({ 구분: g, 항목: '전체', 값: v.length });
+        out.push({ 구분: g, 항목: '진행 중', 값: open.length });
+        for (const s of new Set(v.map((r) => r['진행단계']))) out.push({ 구분: g, 항목: '상태:' + s, 값: v.filter((r) => r['진행단계'] === s).length });
+        out.push({ 구분: g, 항목: '접수대기 중앙값', 값: med('접수대기일수') });
+        out.push({ 구분: g, 항목: '검토 중앙값', 값: med('검토일수') });
+        out.push({ 구분: g, 항목: '결과 통보 중앙값', 값: med('결과통보일수') });
+        out.push({ 구분: g, 항목: '총소요 중앙값', 값: med('총소요일수') });
+      }
+      return out;
+    }
+  });
+
+  dash.calc('s_rev', {
+    inputs: ['sims_2026'],
+    title: '검토자별 과업 현황',
+    description: '검토자가 있는 건의 검토자별 접수 처리기간(접수대기→접수완료) 중앙값, 전체, 진행 중(접수완료·검토진행·재협의), 접수완료, 검토진행, 협의완료(재협의완료 포함), 접수반려 건수, 검토일수 중앙값, 메모가 있는 건수. 진행 중이 많은 순.',
+    fn: (sims_2026) => {
+      const out = [];
+      const assigned = sims_2026.filter((r) => r['검토담당자'] !== '미배정');
+      for (const p of new Set(assigned.map((r) => r['검토담당자']))) {
+        const v = assigned.filter((r) => r['검토담당자'] === p);
+        const n = (s) => v.filter((r) => r['진행단계'] === s).length;
+        const open = v.filter((r) => ['접수완료', '검토진행', '재협의대기', '재협의진행'].includes(r['진행단계']));
+        const rd = v.map((r) => r['검토일수']).filter((x) => x !== '' && x != null).map(Number);
+        const wd = v.map((r) => r['접수대기일수']).filter((x) => x !== '' && x != null).map(Number);
+        out.push({
+          접수처리중앙값: wd.length ? Math.round(d3.median(wd) * 10) / 10 : null,
+          검토담당자: p, 전체: v.length, 진행중: open.length, 접수완료: n('접수완료'), 검토진행: n('검토진행'),
+          협의완료: n('협의완료(원안동의)') + n('협의완료(권고안제시)') + n('재협의완료'), 접수반려: n('접수반려'),
+          검토일수중앙값: rd.length ? Math.round(d3.median(rd) * 10) / 10 : null,
+          메모건수: v.filter((r) => r['메모']).length
+        });
+      }
+      return out.sort((a, b) => b.진행중 - a.진행중 || b.전체 - a.전체);
+    }
+  });
+
+  dash.calc('s_field', {
+    inputs: ['sims_2026'],
+    title: '분야별 건수',
+    description: '신청분야별 전체, 진행 중(접수완료·검토진행·재협의), 접수완료, 검토진행, 협의완료(재협의완료 포함), 접수반려 건수와 그 분야를 가장 많이 맡은 검토자.',
+    fn: (sims_2026) => {
+      const out = [];
+      for (const f of new Set(sims_2026.map((r) => r['신청분야']))) {
+        const v = sims_2026.filter((r) => r['신청분야'] === f);
+        const n = (s) => v.filter((r) => r['진행단계'] === s).length;
+        const top = [...d3.rollup(v.filter((r) => r['검토담당자'] !== '미배정'), (g) => g.length, (r) => r['검토담당자'])].sort((a, b) => b[1] - a[1])[0];
+        out.push({ 신청분야: f, 전체: v.length, 진행중: n('접수완료') + n('검토진행') + n('재협의대기') + n('재협의진행'), 접수완료: n('접수완료'), 검토진행: n('검토진행'),
+          협의완료: n('협의완료(원안동의)') + n('협의완료(권고안제시)') + n('재협의완료'), 접수반려: n('접수반려'), 담당자: top ? top[0] + ' ' + top[1] + '건' : '' });
+      }
+      return out.sort((a, b) => b.전체 - a.전체);
+    }
+  });
+
+  dash.calc('s_month', {
+    inputs: ['sims_2026'],
+    title: '월별 처리 흐름',
+    description: '검토자(전체 포함)·월별 접수, 검토의견 등록, 결과서 등록 건수.',
+    fn: (sims_2026) => {
+      const out = [];
+      const months = [...new Set(sims_2026.flatMap((r) => [r['접수월'], r['검토완료월'], r['결과서수령월']]).filter(Boolean))].sort();
+      for (const p of ['전체', ...new Set(sims_2026.map((r) => r['검토담당자']).filter((x) => x !== '미배정'))]) {
+        const v = p === '전체' ? sims_2026 : sims_2026.filter((r) => r['검토담당자'] === p);
+        for (const m of months) out.push({ 검토자: p, 월: m, 접수: v.filter((r) => r['접수월'] === m).length, 검토완료: v.filter((r) => r['검토완료월'] === m).length, 결과서수령: v.filter((r) => r['결과서수령월'] === m).length });
+      }
+      return out;
+    }
+  });
+
+  dash.calc('od_matrix', {
+    inputs: ['onedrive_files'],
+    title: '협의건별 단계 폴더 업로드일',
+    description: '원드라이브 단계 폴더(①~⑤)별로 협의건의 파일이 마지막으로 올라온 날. 협의번호가 2026인 파일만.',
+    fn: (onedrive_files) => {
+      const cols = { '1': '초안', '2': '검토본', '3': '수정본', '4': '최종', '5': '시스템업로드' };
+      const by = d3.group(onedrive_files.filter((r) => r['협의번호']), (r) => r['협의번호']);
+      const out = [];
+      for (const [no, v] of by) {
+        const row = { 협의번호: no, 담당자: v[0]['담당자'], 사업명: v[0]['사업명'], SIMS단계: v[0]['SIMS단계'], 초안: '', 검토본: '', 수정본: '', 최종: '', 시스템업로드: '', 최근업로드: d3.max(v, (r) => r['업로드일']), 최종단계: d3.max(v, (r) => r['단계번호']) };
+        const named = v.find((r) => r['담당자출처'] === '폴더'); if (named) row['담당자'] = named['담당자'];
+        for (const [k, c] of Object.entries(cols)) { const f = v.filter((r) => r['단계번호'] === k); if (f.length) row[c] = d3.max(f, (r) => r['업로드일']); }
+        out.push(row);
+      }
+      return out.sort((a, b) => d3.descending(a.최근업로드, b.최근업로드));
+    }
+  });
+
+  // ---------- helpers ----------
+  const clearBox = (el) => { el.classList.remove('dash-skeleton'); el.textContent = ''; };
+  const failBox = (el) => { clearBox(el); const d = document.createElement('div'); d.className = 'pc-fail'; d.textContent = 'Failed to load'; el.appendChild(d); };
+  const isLoading = (s) => s === 'loading' || s === 'missing';
+  const setText = (el, t) => { el.classList.remove('dash-skeleton'); el.textContent = t; };
+  const tipFor = (card) => { let t = card.querySelector('.pc-tip'); if (!t) { t = document.createElement('div'); t.className = 'pc-tip'; t.hidden = true; card.appendChild(t); } return t; };
+  const showTip = (card, ev, title, lines) => {
+    const t = tipFor(card); t.textContent = '';
+    const h = document.createElement('div'); h.className = 't'; h.textContent = title; t.appendChild(h);
+    for (const [color, name, val] of lines) { const row = document.createElement('div'); if (color) { const i = document.createElement('i'); i.className = 'pc-dot'; i.style.background = color; row.appendChild(i); } row.appendChild(document.createTextNode(name + ' ' + val)); t.appendChild(row); }
+    t.hidden = false;
+    const cr = card.getBoundingClientRect();
+    let x = ev.clientX - cr.left + 12, y = ev.clientY - cr.top + 12;
+    if (x + t.offsetWidth > cr.width - 8) x = Math.max(8, ev.clientX - cr.left - t.offsetWidth - 12);
+    if (y + t.offsetHeight > cr.height - 8) y = Math.max(8, ev.clientY - cr.top - t.offsetHeight - 12);
+    t.style.left = x + 'px'; t.style.top = y + 'px';
+  };
+  const hideTip = (card) => { const t = card.querySelector('.pc-tip'); if (t) t.hidden = true; };
+  const measure = (svg, texts) => { const g = svg.append('g').attr('opacity', 0); let mx = 0; for (const s of texts) mx = Math.max(mx, g.append('text').style('font-size', 'var(--cds-font-size-caption)').text(s).node().getComputedTextLength()); g.remove(); return mx; };
+  const TODAY = (() => { const n = new Date(); return Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()); })();
+  const ageOf = (r) => { if (!OPEN.includes(r['진행단계']) || !r['접수완료일']) return null; const p = r['접수완료일'].split('-').map(Number); return Math.round((TODAY - Date.UTC(p[0], p[1] - 1, p[2])) / 86400000); };
+  const ageClass = (d) => d == null ? '' : d >= 60 ? 'bad' : d >= 30 ? 'warn' : '';
+  const md = (s) => s ? s.slice(5).replace('-', '.') : '';
+  const MSERIES = [['접수', '접수'], ['검토완료', '검토의견 등록'], ['결과서수령', '결과서 등록']];
+  const lg = document.getElementById('month-legend');
+  MSERIES.forEach(([, name], i) => { const s = document.createElement('span'); const c = document.createElement('i'); c.style.background = dash.colors[i]; s.appendChild(c); s.appendChild(document.createTextNode(name)); lg.appendChild(s); });
+
+  function monthChart(el, card, rows) {
+    clearBox(el);
+    const W = Math.max(280, el.clientWidth), H = 230, m = { t: 12, r: 8, b: 26, l: 30 };
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('height', H).attr('viewBox', `0 0 ${W} ${H}`);
+    const months = rows.map((r) => r['월']);
+    const x = d3.scaleBand(months, [m.l, W - m.r]).paddingInner(0.25).paddingOuter(0.1);
+    const xs = d3.scaleBand(MSERIES.map((s) => s[0]), [0, x.bandwidth()]).padding(0.12);
+    const y = d3.scaleLinear([0, d3.max(rows, (r) => Math.max(...MSERIES.map((s) => r[s[0]]))) || 1], [H - m.b, m.t]).nice();
+    const cap = 'var(--cds-font-size-caption)';
+    y.ticks(4).filter((v) => Number.isInteger(v)).forEach((v) => {
+      svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(v)).attr('y2', y(v)).style('stroke', v === 0 ? 'var(--cds-chart-axis)' : 'var(--cds-chart-grid)');
+      svg.append('text').attr('x', m.l - 6).attr('y', y(v)).attr('dy', '0.35em').attr('text-anchor', 'end').style('font-size', cap).style('fill', 'var(--color-fg-muted)').text(v);
+    });
+    const step = Math.ceil(months.length / Math.max(1, Math.floor(W / 52)));
+    rows.forEach((r, i) => {
+      MSERIES.forEach(([k], j) => { const v = r[k]; if (!v) return; svg.append('rect').attr('x', x(r['월']) + xs(k)).attr('y', y(v)).attr('width', Math.min(18, xs.bandwidth())).attr('height', y(0) - y(v)).attr('rx', 3).style('fill', dash.colors[j]); });
+      if (i % step === 0) svg.append('text').attr('x', x(r['월']) + x.bandwidth() / 2).attr('y', H - 8).attr('text-anchor', 'middle').style('font-size', cap).style('fill', 'var(--color-fg-muted)').text(Number(r['월'].slice(5)) + '월');
+      svg.append('rect').attr('x', x(r['월'])).attr('y', m.t).attr('width', x.bandwidth()).attr('height', H - m.t - m.b).style('fill', 'transparent')
+        .on('mousemove', (ev) => showTip(card, ev, r['월'].replace('-', '년 ') + '월', MSERIES.map(([k, name], j) => [dash.colors[j], name, fmt(r[k]) + '건'])))
+        .on('mouseleave', () => hideTip(card));
+    });
+  }
+
+  function stripChart(el, card, rows, revRows, sel, onPick) {
+    clearBox(el);
+    const ppl = revRows.map((r) => r['검토담당자']);
+    const cap = 'var(--cds-font-size-caption)';
+    const W = Math.max(280, el.clientWidth), rowH = 30;
+    const svg = d3.select(el).append('svg').attr('width', '100%');
+    const labW = measure(svg, ppl) + 14;
+    const H = ppl.length * rowH + 26;
+    svg.attr('height', H).attr('viewBox', `0 0 ${W} ${H}`);
+    const vals = rows.map((r) => num(r['검토일수'])).filter((v) => v != null);
+    const x = d3.scaleLinear([0, Math.max(10, d3.max(vals) || 10)], [labW, W - 12]).nice();
+    x.ticks(5).forEach((v) => {
+      svg.append('line').attr('x1', x(v)).attr('x2', x(v)).attr('y1', 0).attr('y2', H - 22).style('stroke', 'var(--cds-chart-grid)');
+      svg.append('text').attr('x', x(v)).attr('y', H - 6).attr('text-anchor', 'middle').style('font-size', cap).style('fill', 'var(--color-fg-muted)').text(v + '일');
+    });
+    ppl.forEach((p, i) => {
+      const cy = i * rowH + rowH / 2, on = !sel || sel === p;
+      svg.append('text').attr('x', labW - 8).attr('y', cy).attr('dy', '0.35em').attr('text-anchor', 'end').style('font-size', cap).style('fill', 'var(--color-fg)').style('cursor', 'pointer').text(p).on('click', () => onPick(p));
+      rows.filter((r) => r['검토담당자'] === p && num(r['검토일수']) != null).forEach((r, k) => {
+        svg.append('circle').attr('cx', x(num(r['검토일수']))).attr('cy', cy + ((k * 7) % 11 - 5) * 1.4).attr('r', 4).style('fill', dash.colors[0]).style('fill-opacity', on ? 0.55 : 0.15)
+          .on('mousemove', (ev) => showTip(card, ev, r['협의번호'] + ' · ' + p, [[null, r['사업명'].slice(0, 26), ''], [null, '검토일수', f1(num(r['검토일수'])) + '일']]))
+          .on('mouseleave', () => hideTip(card));
+      });
+      const mdv = revRows[i]['검토일수중앙값'];
+      if (mdv != null) svg.append('line').attr('x1', x(mdv)).attr('x2', x(mdv)).attr('y1', cy - 11).attr('y2', cy + 11).style('stroke', 'var(--color-fg)').style('stroke-width', 2).style('opacity', on ? 1 : 0.3);
+    });
+  }
+
+  // ---------- state ----------
+  let rev = null, stage = '진행 중', div = '전체', field = '전체';
+  const sorts = { 'tb-rev': { k: '진행중', dir: -1 }, 'tb-list': { k: '경과일', dir: -1 }, 'tb-od': { k: '최근업로드', dir: -1 }, 'tb-field': { k: '전체', dir: -1 } };
+  const toggleRev = (p) => { rev = rev === p ? null : p; draw(); };
+  function chips(boxId, items, cur, label, onPick) {
+    const box = document.getElementById(boxId);
+    const sig = items.join('|');
+    if (box.dataset.sig !== sig) { box.dataset.sig = sig; box.textContent = ''; for (const it of items) { const b = document.createElement('button'); b.type = 'button'; b.className = 'pc-chip'; b.dataset.v = it; b.textContent = label(it); b.addEventListener('click', () => onPick(it)); box.appendChild(b); } }
+    box.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === String(cur))));
+  }
+  const NUMK = ['전체', '진행중', '접수완료', '검토진행', '협의완료', '접수반려', '검토일수중앙값', '접수처리중앙값', '최장경과일', '메모건수', '경과일', '접수대기일수'];
+  function sortRows(id, rows) {
+    const st = sorts[id];
+    const isNum = NUMK.includes(st.k) && id !== 'tb-list' || (id === 'tb-list' && (st.k === '경과일' || st.k === '접수대기일수'));
+    const out = rows.slice().sort((a, b) => {
+      if (isNum) { const x = num(a[st.k]), y = num(b[st.k]); if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1; return (x - y) * st.dir; }
+      const x = String(a[st.k] ?? ''), y = String(b[st.k] ?? ''); if (!x && y) return 1; if (x && !y) return -1;
+      return d3.ascending(x, y) * st.dir;
+    });
+    document.querySelectorAll('#' + id + ' th').forEach((th) => { const k = th.querySelector('button').dataset.k; th.setAttribute('aria-sort', k === st.k ? (st.dir === 1 ? 'ascending' : 'descending') : 'none'); });
+    return out;
+  }
+  ['tb-rev', 'tb-list', 'tb-od', 'tb-field'].forEach((id) => document.querySelectorAll('#' + id + ' .pc-th').forEach((b) => b.addEventListener('click', () => {
+    const st = sorts[id]; if (st.k === b.dataset.k) st.dir *= -1; else { st.k = b.dataset.k; st.dir = (NUMK.includes(b.dataset.k) || id === 'tb-od') ? -1 : 1; }
+    draw();
+  })));
+  document.getElementById('list-q').addEventListener('input', () => draw());
+  document.getElementById('od-q').addEventListener('input', () => draw());
+
+  function draw() {
+    const ds = dash.data('sims_2026'), kp = dash.data('s_kpi'), sr = dash.data('s_rev');
+    const kv = (g, it) => { const r = kp.status === 'ok' ? kp.data.find((d) => d['구분'] === g && d['항목'] === it) : null; return r ? r['값'] : null; };
+
+    document.querySelectorAll('#takeaway [data-source="s_kpi"]').forEach((el) => {
+      if (kp.status === 'ok') { const v = kv('전체', decodeURIComponent(el.dataset.where.split('항목=')[1])); setText(el, v == null ? '—' : fmt(v)); }
+      else if (!isLoading(kp.status)) setText(el, '—');
+    });
+    if (sr.status === 'ok' && sr.data.length) setText(document.getElementById('tk-who'), sr.data[0]['검토담당자']);
+    if (ds.status === 'ok') { const a = ds.data.map(ageOf).filter((v) => v != null); setText(document.getElementById('tk-age'), a.length ? fmt(d3.max(a)) : '0'); }
+    else if (!isLoading(ds.status)) setText(document.getElementById('tk-age'), '—');
+    const maxAge = new Map();
+    if (ds.status === 'ok') for (const r of ds.data) { const a = ageOf(r); if (a != null) maxAge.set(r['검토담당자'], Math.max(a, maxAge.get(r['검토담당자']) ?? 0)); }
+    if (ds.status === 'ok' && ds.data.length) setText(document.getElementById('asof-v'), ds.data[0]['수집시각']);
+    else if (!isLoading(ds.status)) setText(document.getElementById('asof-v'), '—');
+
+    if (ds.status === 'ok') chips('f-div', ['전체', ...[...new Set(ds.data.map((r) => r['구분']))].sort().reverse()], div, (s) => s, (s) => { div = s; draw(); });
+    document.getElementById('stage-title').textContent = (div === '전체' ? '' : div + ' ') + '진행상태별 건수';
+
+    // stage tiles
+    if (kp.status === 'ok') {
+      const tiles = document.getElementById('stage-tiles'); tiles.textContent = '';
+      const present = kp.data.filter((d) => d['구분'] === div && d['항목'].startsWith('상태:')).map((d) => d['항목'].slice(3));
+      const list = [['전체', '전체'], ...[...ORDER.filter((s) => present.includes(s)), ...present.filter((s) => !ORDER.includes(s))].map((s) => [s, '상태:' + s])];
+      for (const [s, item] of list) {
+        const t = document.createElement('div'); t.className = 'pc-kpi'; if (s !== '전체') t.style.setProperty('--pc-c', stageColor(s));
+        const l = document.createElement('span'); l.className = 'lbl'; l.textContent = s;
+        const v = document.createElement('span'); v.className = 'val';
+        const n = document.createElement('span'); n.className = 'num'; n.dataset.source = 's_kpi'; n.dataset.field = '값'; n.dataset.where = '구분=' + encodeURIComponent(div) + '&항목=' + encodeURIComponent(item);
+        n.textContent = fmt(kv(div, item) || 0);
+        const u = document.createElement('span'); u.className = 'unit'; u.textContent = '건';
+        v.appendChild(n); v.appendChild(u); t.appendChild(l); t.appendChild(v); tiles.appendChild(t);
+      }
+      const days = document.getElementById('stage-days'); days.textContent = '';
+      for (const [it, label, sub] of [['접수대기 중앙값', '접수 처리', '접수대기 → 접수완료'], ['검토 중앙값', '검토', '접수완료 → 검토의견 등록'], ['결과 통보 중앙값', '결과 통보', '검토의견 → 결과서 등록'], ['총소요 중앙값', '전체', '신청 → 결과서 등록']]) {
+        const s = document.createElement('div'); s.className = 'pc-step';
+        const a = document.createElement('span'); a.className = 'lbl'; a.textContent = label + ' 소요일';
+        const b = document.createElement('span'); b.className = 'num'; b.dataset.source = 's_kpi'; b.dataset.field = '값'; b.dataset.where = '구분=' + encodeURIComponent(div) + '&항목=' + encodeURIComponent(it);
+        const v = kv(div, it); b.textContent = v == null ? '—' : f1(v);
+        const c = document.createElement('span'); c.className = 'sub'; c.textContent = sub;
+        s.appendChild(a); s.appendChild(b); s.appendChild(c); days.appendChild(s);
+      }
+    }
+
+    // reviewers
+    if (sr.status === 'ok') {
+      chips('f-rev', ['전체', ...sr.data.map((r) => r['검토담당자'])], rev || '전체', (p) => p, (p) => { rev = p === '전체' ? null : p; draw(); });
+      const body = document.querySelector('#tb-rev tbody'); body.textContent = '';
+      for (const r of sortRows('tb-rev', sr.data.map((r) => ({ ...r, 최장경과일: maxAge.get(r['검토담당자']) ?? null })))) {
+        const tr = document.createElement('tr'); tr.className = 'pc-rowbtn' + (rev === r['검토담당자'] ? ' sel' : ''); tr.tabIndex = 0;
+        tr.addEventListener('click', () => toggleRev(r['검토담당자'])); tr.addEventListener('keydown', (e) => { if (e.key === 'Enter') toggleRev(r['검토담당자']); });
+        for (const [k, cls] of [['검토담당자', 'nowrap'], ['전체', 'num'], ['진행중', 'num'], ['접수완료', 'num'], ['검토진행', 'num'], ['협의완료', 'num'], ['접수반려', 'num pc-hide-sm'], ['접수처리중앙값', 'num pc-hide-sm'], ['검토일수중앙값', 'num'], ['최장경과일', 'num'], ['메모건수', 'num pc-hide-sm']]) {
+          const td = document.createElement('td'); td.className = cls; const v = k === '최장경과일' ? (maxAge.get(r['검토담당자']) ?? null) : r[k];
+          if (k === '최장경과일' && v != null) { const s = document.createElement('span'); s.className = 'pc-age ' + ageClass(v); s.textContent = fmt(v); td.appendChild(s); }
+          else td.textContent = v == null ? '' : ((k === '검토일수중앙값' || k === '접수처리중앙값') ? f1(v) : (typeof v === 'number' ? fmt(v) : v));
+          tr.appendChild(td);
+        }
+        body.appendChild(tr);
+      }
+    }
+
+    const sm = dash.data('s_month'), elM = document.getElementById('ch-month');
+    document.getElementById('month-title').textContent = (rev ? rev + ' · ' : '') + '월별 처리 흐름';
+    if (sm.status === 'ok') monthChart(elM, document.getElementById('card-month'), sm.data.filter((r) => r['검토자'] === (rev || '전체')));
+    else if (!isLoading(sm.status)) failBox(elM);
+
+    const elS = document.getElementById('ch-strip');
+    if (ds.status === 'ok' && sr.status === 'ok') stripChart(elS, document.getElementById('card-strip'), ds.data, sr.data, rev, toggleRev);
+    else if (!isLoading(ds.status) && !isLoading(sr.status)) failBox(elS);
+
+    // field
+    const sf = dash.data('s_field');
+    if (sf.status === 'ok') {
+      chips('f-field', ['전체', ...sf.data.map((r) => r['신청분야'])], field, (s) => s, (s) => { field = s; draw(); });
+      const body = document.querySelector('#tb-field tbody'); body.textContent = '';
+      for (const r of sortRows('tb-field', sf.data)) {
+        const tr = document.createElement('tr'); tr.className = 'pc-rowbtn' + (field === r['신청분야'] ? ' sel' : ''); tr.tabIndex = 0;
+        const pick = () => { field = field === r['신청분야'] ? '전체' : r['신청분야']; draw(); };
+        tr.addEventListener('click', pick); tr.addEventListener('keydown', (e) => { if (e.key === 'Enter') pick(); });
+        for (const [k, cls] of [['신청분야', 'nowrap'], ['전체', 'num'], ['진행중', 'num'], ['접수완료', 'num'], ['검토진행', 'num'], ['협의완료', 'num'], ['접수반려', 'num'], ['담당자', 'nowrap']]) {
+          const td = document.createElement('td'); td.className = cls; td.textContent = typeof r[k] === 'number' ? fmt(r[k]) : r[k]; tr.appendChild(td);
+        }
+        body.appendChild(tr);
+      }
+    }
+
+    // schedule list
+    if (ds.status === 'ok') {
+      const present = [...new Set(ds.data.map((r) => r['진행단계']))];
+      chips('f-stage', ['진행 중', '전체', ...ORDER.filter((s) => present.includes(s)), ...present.filter((s) => !ORDER.includes(s)), '메모 있음'], stage, (s) => s, (s) => { stage = s; draw(); });
+      const q = document.getElementById('list-q').value.trim().toLowerCase();
+      const rows = ds.data.filter((r) => (div === '전체' || r['구분'] === div) && (field === '전체' || r['신청분야'] === field) && (!rev || r['검토담당자'] === rev) &&
+        (stage === '전체' || (stage === '진행 중' ? OPEN.includes(r['진행단계']) : stage === '메모 있음' ? !!r['메모'] : r['진행단계'] === stage)) &&
+        (!q || [r['사업명'], r['부처'], r['협의번호'], r['검토담당자'], r['신청분야'], r['메모']].join(' ').toLowerCase().includes(q)));
+      const body = document.querySelector('#tb-list tbody'); body.textContent = '';
+      for (const r of sortRows('tb-list', rows.map((r) => ({ ...r, 경과일: ageOf(r) })))) {
+        const tr = document.createElement('tr');
+        for (const [k, cls] of [['협의번호', 'nowrap'], ['검토담당자', 'nowrap'], ['구분', 'nowrap pc-hide-sm'], ['부처', 'nowrap'], ['신청분야', 'nowrap'], ['사업명', 'wrap']]) { const td = document.createElement('td'); td.className = cls; td.textContent = r[k]; tr.appendChild(td); }
+        let td = document.createElement('td'); const pill = document.createElement('span');
+        pill.className = 'pc-pill ' + (DONE.includes(r['진행단계']) ? 'ok' : OPEN.includes(r['진행단계']) ? 'warn' : r['진행단계'] === '접수반려' ? 'rec' : 'wait');
+        pill.textContent = r['진행단계']; td.appendChild(pill); tr.appendChild(td);
+        td = document.createElement('td'); td.className = 'num';
+        const age = r['경과일'];
+        if (age != null) { const s = document.createElement('span'); s.className = 'pc-age ' + ageClass(age); s.textContent = fmt(age) + '일'; td.appendChild(s); }
+        tr.appendChild(td);
+        for (const k of ['접수일', '접수완료일', '접수대기일수', '검토완료일', '결과서수령일']) {
+          td = document.createElement('td');
+          if (k === '접수대기일수') { td.className = 'num'; const w = num(r[k]); td.textContent = w == null ? '' : f1(w) + '일'; }
+          else { td.className = 'nowrap'; td.textContent = md(r[k]); }
+          tr.appendChild(td);
+        }
+        td = document.createElement('td'); td.className = 'pc-memo';
+        const memoText = r['메모'] || (r['진행단계'] === '접수반려' && r['반려사유'] ? '[반려사유] ' + r['반려사유'] : '');
+        if (memoText) { td.appendChild(document.createTextNode(memoText)); const s2 = document.createElement('small'); s2.textContent = r['메모'] && r['메모확인일'] ? r['메모확인일'] + ' 확인' : ''; td.appendChild(s2); }
+        tr.appendChild(td); body.appendChild(tr);
+      }
+      document.getElementById('list-count').textContent = [div === '전체' ? null : div, field === '전체' ? null : field, rev, stage, fmt(rows.length) + '건'].filter(Boolean).join(' · ');
+    }
+
+    // onedrive
+    const od = dash.data('od_matrix');
+    if (od.status === 'ok') {
+      const q = document.getElementById('od-q').value.trim().toLowerCase();
+      const rows = od.data.filter((r) => (!rev || r['담당자'] === rev) && (!q || [r['사업명'], r['협의번호'], r['담당자']].join(' ').toLowerCase().includes(q)));
+      const body = document.querySelector('#tb-od tbody'); body.textContent = '';
+      const cols = ['초안', '검토본', '수정본', '최종', '시스템업로드'];
+      for (const r of sortRows('tb-od', rows)) {
+        const tr = document.createElement('tr');
+        for (const [k, cls] of [['협의번호', 'nowrap'], ['담당자', 'nowrap'], ['사업명', 'wrap']]) { const td = document.createElement('td'); td.className = cls; td.textContent = r[k]; tr.appendChild(td); }
+        cols.forEach((c, i) => { const td = document.createElement('td'); td.className = 'nowrap'; if (r[c]) { const s = document.createElement('span'); s.className = 'pc-od' + (String(i + 1) === String(r['최종단계']) ? ' last' : ''); s.textContent = md(r[c]); td.appendChild(s); } tr.appendChild(td); });
+        const td = document.createElement('td'); td.className = 'nowrap pc-hide-sm'; td.textContent = r['SIMS단계']; tr.appendChild(td);
+        body.appendChild(tr);
+      }
+      document.getElementById('od-count').textContent = (rev ? rev + ' · ' : '') + fmt(rows.length) + '건';
+    }
+  }
+
+  dash.onData(draw);
+  const named = document.getElementById(location.hash.slice(1));
+  if (named) { named.scrollIntoView(); dash.setLink(named.id); }
+})();
+</script>
