@@ -134,7 +134,7 @@ body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:var(-
 <div class="pc">
   <header class="pc-head">
     <h1 id="top">사전협의 검토현황 2026</h1>
-    <p class="pc-take" id="takeaway">2026년 협의 <b class="dash-skeleton" data-source="s_kpi" data-field="값" data-where="구분=전체&amp;항목=전체">—</b>건 가운데 접수완료 후 아직 끝나지 않은 건은 <b class="dash-skeleton" data-source="s_kpi" data-field="값" data-where="구분=전체&amp;항목=진행 중">—</b>건입니다. 진행 중 건이 가장 많은 검토자는 <b id="tk-who" class="dash-skeleton" data-source="s_rev" data-field="검토담당자" data-row="0">—</b>이고, 접수완료 후 가장 오래된 건은 오늘 기준 <b id="tk-age" class="dash-skeleton" data-source="sims_2026">—</b>일째입니다.</p>
+    <p class="pc-take" id="takeaway">2026년 협의 <b class="dash-skeleton" data-source="s_kpi" data-field="값" data-where="구분=전체&amp;항목=전체">—</b>건 가운데 접수완료 후 아직 끝나지 않은 건은 <b class="dash-skeleton" data-source="s_kpi" data-field="값" data-where="구분=전체&amp;항목=진행 중">—</b>건입니다.</p>
     <p class="pc-asof">SIMS 수집 시각 <span id="asof-v" class="dash-skeleton" data-source="sims_2026" data-field="수집시각" data-row="0">—</span> · 사전협의목록 전체(중앙부처·지자체) 기준</p>
   </header>
 
@@ -519,9 +519,6 @@ body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:var(-
       if (kp.status === 'ok') { const v = kv('전체', decodeURIComponent(el.dataset.where.split('항목=')[1])); setText(el, v == null ? '—' : fmt(v)); }
       else if (!isLoading(kp.status)) setText(el, '—');
     });
-    if (sr.status === 'ok' && sr.data.length) setText(document.getElementById('tk-who'), sr.data[0]['검토담당자']);
-    if (ds.status === 'ok') { const a = ds.data.map(ageOf).filter((v) => v != null); setText(document.getElementById('tk-age'), a.length ? fmt(d3.max(a)) : '0'); }
-    else if (!isLoading(ds.status)) setText(document.getElementById('tk-age'), '—');
     const maxAge = new Map();
     if (ds.status === 'ok') for (const r of ds.data) { const a = ageOf(r); if (a != null) maxAge.set(r['검토담당자'], Math.max(a, maxAge.get(r['검토담당자']) ?? 0)); }
     if (ds.status === 'ok' && ds.data.length) setText(document.getElementById('asof-v'), ds.data[0]['수집시각']);
