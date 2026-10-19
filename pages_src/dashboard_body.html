@@ -94,28 +94,7 @@
   </section>
 
   <section class="pc-sec" id="sec-rev">
-    <h2>검토자별 과업 현황</h2>
-    <div class="pc-card" id="card-rev">
-      <p class="pc-note">행을 누르면 아래 차트와 표가 그 검토자로 바뀝니다.</p>
-      <div class="pc-tablebox" style="max-height:none">
-        <table class="pc-table" id="tb-rev" data-source="s_rev" data-row-key="검토담당자">
-          <thead><tr>
-            <th data-field="검토담당자"><button class="pc-th" type="button" data-k="검토담당자">검토자</button></th>
-            <th data-field="전체"><button class="pc-th" type="button" data-k="전체">전체</button></th>
-            <th data-field="진행중"><button class="pc-th" type="button" data-k="진행중">진행 중</button></th>
-            <th data-field="접수완료"><button class="pc-th" type="button" data-k="접수완료">접수완료</button></th>
-            <th data-field="검토진행"><button class="pc-th" type="button" data-k="검토진행">검토진행</button></th>
-            <th data-field="협의완료"><button class="pc-th" type="button" data-k="협의완료">협의완료</button></th>
-            <th data-field="접수반려" class="pc-hide-sm"><button class="pc-th" type="button" data-k="접수반려">접수반려</button></th>
-            <th data-field="접수처리중앙값" class="pc-hide-sm"><button class="pc-th" type="button" data-k="접수처리중앙값">접수 처리기간 중앙값</button></th>
-            <th data-field="검토일수중앙값"><button class="pc-th" type="button" data-k="검토일수중앙값">검토일수 중앙값</button></th>
-            <th><button class="pc-th" type="button" data-k="최장경과일">최장 경과일</button></th>
-            <th data-field="메모건수" class="pc-hide-sm"><button class="pc-th" type="button" data-k="메모건수">메모</button></th>
-          </tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
+    <h2>처리 현황</h2>
     <div class="pc-card" id="card-field">
       <h3>분야별 건수</h3>
       <p class="pc-note">신청분야별 진행상태입니다. 행을 누르면 일정표가 그 분야로 바뀝니다.</p>
@@ -247,7 +226,7 @@
 
   dash.calc('s_rev', {
     inputs: ['sims_2026'],
-    title: '검토자별 과업 현황',
+    title: '검토자별 처리 통계',
     description: '검토자가 있는 건의 검토자별 접수 처리기간(접수대기→접수완료) 중앙값, 전체, 진행 중(접수완료·검토진행·재협의), 접수완료, 검토진행, 협의완료(재협의완료 포함), 접수반려 건수, 검토일수 중앙값, 메모가 있는 건수. 진행 중이 많은 순.',
     fn: (sims_2026) => {
       const out = [];
@@ -400,7 +379,7 @@
 
   // ---------- state ----------
   let rev = null, stage = '진행 중', div = '전체', field = '전체';
-  const sorts = { 'tb-rev': { k: '진행중', dir: -1 }, 'tb-list': { k: '경과일', dir: -1 }, 'tb-od': { k: '최근업로드', dir: -1 }, 'tb-field': { k: '전체', dir: -1 } };
+  const sorts = { 'tb-list': { k: '경과일', dir: -1 }, 'tb-od': { k: '최근업로드', dir: -1 }, 'tb-field': { k: '전체', dir: -1 } };
   const toggleRev = (p) => { rev = rev === p ? null : p; draw(); };
   function chips(boxId, items, cur, label, onPick) {
     const box = document.getElementById(boxId);
@@ -420,7 +399,7 @@
     document.querySelectorAll('#' + id + ' th').forEach((th) => { const k = th.querySelector('button').dataset.k; th.setAttribute('aria-sort', k === st.k ? (st.dir === 1 ? 'ascending' : 'descending') : 'none'); });
     return out;
   }
-  ['tb-rev', 'tb-list', 'tb-od', 'tb-field'].forEach((id) => document.querySelectorAll('#' + id + ' .pc-th').forEach((b) => b.addEventListener('click', () => {
+  ['tb-list', 'tb-od', 'tb-field'].forEach((id) => document.querySelectorAll('#' + id + ' .pc-th').forEach((b) => b.addEventListener('click', () => {
     const st = sorts[id]; if (st.k === b.dataset.k) st.dir *= -1; else { st.k = b.dataset.k; st.dir = (NUMK.includes(b.dataset.k) || id === 'tb-od') ? -1 : 1; }
     draw();
   })));
@@ -450,8 +429,6 @@
       if (kp.status === 'ok') { const v = kv('전체', decodeURIComponent(el.dataset.where.split('항목=')[1])); setText(el, v == null ? '—' : fmt(v)); }
       else if (!isLoading(kp.status)) setText(el, '—');
     });
-    const maxAge = new Map();
-    if (ds.status === 'ok') for (const r of ds.data) { const a = ageOf(r); if (a != null) maxAge.set(r['검토담당자'], Math.max(a, maxAge.get(r['검토담당자']) ?? 0)); }
     if (ds.status === 'ok' && ds.data.length) setText(document.getElementById('asof-v'), ds.data[0]['수집시각']);
     else if (!isLoading(ds.status)) setText(document.getElementById('asof-v'), '—');
 
@@ -486,18 +463,6 @@
     // reviewers
     if (sr.status === 'ok') {
       chips('f-rev', ['전체', ...sr.data.map((r) => r['검토담당자'])], rev || '전체', (p) => p, (p) => { rev = p === '전체' ? null : p; draw(); });
-      const body = document.querySelector('#tb-rev tbody'); body.textContent = '';
-      for (const r of sortRows('tb-rev', sr.data.map((r) => ({ ...r, 최장경과일: maxAge.get(r['검토담당자']) ?? null })))) {
-        const tr = document.createElement('tr'); tr.className = 'pc-rowbtn' + (rev === r['검토담당자'] ? ' sel' : ''); tr.tabIndex = 0;
-        tr.addEventListener('click', () => toggleRev(r['검토담당자'])); tr.addEventListener('keydown', (e) => { if (e.key === 'Enter') toggleRev(r['검토담당자']); });
-        for (const [k, cls] of [['검토담당자', 'nowrap'], ['전체', 'num'], ['진행중', 'num'], ['접수완료', 'num'], ['검토진행', 'num'], ['협의완료', 'num'], ['접수반려', 'num pc-hide-sm'], ['접수처리중앙값', 'num pc-hide-sm'], ['검토일수중앙값', 'num'], ['최장경과일', 'num'], ['메모건수', 'num pc-hide-sm']]) {
-          const td = document.createElement('td'); td.className = cls; const v = k === '최장경과일' ? (maxAge.get(r['검토담당자']) ?? null) : r[k];
-          if (k === '최장경과일' && v != null) { const s = document.createElement('span'); s.className = 'pc-age ' + ageClass(v); s.textContent = fmt(v); td.appendChild(s); }
-          else td.textContent = v == null ? '' : ((k === '검토일수중앙값' || k === '접수처리중앙값') ? f1(v) : (typeof v === 'number' ? fmt(v) : v));
-          tr.appendChild(td);
-        }
-        body.appendChild(tr);
-      }
     }
 
     const sm = dash.data('s_month'), elM = document.getElementById('ch-month');
