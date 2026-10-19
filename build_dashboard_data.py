@@ -9,6 +9,7 @@ dashboard_data/cases_2026.csv → dashboard_data/dash_cases_2026.csv
   검토완료 날짜      = 검토의견등록일시      (검토일수 = 검토의견등록 - 접수완료)
   결과서 수령 날짜   = 검토완료일시          (결과통보일수 = 검토완료 - 검토의견등록)
   초안 작성 날짜     = 원드라이브 ① 초안 폴더에 그 협의건 파일이 처음 올라온 날
+                       (① 에 없고 ③ 수정본 폴더에 있으면 ③ 에 처음 올라온 날)
   경과일             = 접수완료일부터 수집한 날까지의 날수 (대시보드 화면은 여는 날 기준으로 다시 계산)
 """
 import csv
@@ -41,11 +42,15 @@ def main():
     rows = list(csv.DictReader((D / "cases_2026.csv").open(encoding="utf-8")))
     out = []
     # 원드라이브 ① 초안 폴더에 협의건 파일이 처음 올라온 날 = 초안 작성일
-    draft = {}
+    # ① 에 파일이 없고 ③ 수정본 폴더에 있으면 ③ 에 처음 올라온 날로 대신한다
+    draft, revised = {}, {}
     if (D / "onedrive_files.csv").exists():
         for f in csv.DictReader((D / "onedrive_files.csv").open(encoding="utf-8")):
-            if f["단계번호"] == "1" and f["협의번호"] and f["업로드일"]:
-                draft[f["협의번호"]] = min(f["업로드일"], draft.get(f["협의번호"], "9999"))
+            if f["단계번호"] in ("1", "3") and f["협의번호"] and f["업로드일"]:
+                d = draft if f["단계번호"] == "1" else revised
+                d[f["협의번호"]] = min(f["업로드일"], d.get(f["협의번호"], "9999"))
+    for k, v in revised.items():
+        draft.setdefault(k, v)
     for r in rows:
         a, b, c, e = ts(r["신청일시"]), ts(r["접수완료일시"]), ts(r["검토의견등록일시"]), ts(r["검토완료일시"])
         stage = r["진행단계"]
