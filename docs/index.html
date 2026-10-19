@@ -130,6 +130,9 @@ body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:var(-
 .pc-asof{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
 .pc-od{display:inline-block;min-width:3.2rem;padding:1px 6px;border-radius:4px;font-size:var(--cds-font-size-caption);font-variant-numeric:tabular-nums;border:1px solid var(--color-border-line);background:var(--color-bg)}
 .pc-od.last{border-color:var(--color-fg);font-weight:600}
+.pc-duty td{vertical-align:top}
+.pc-duty td.who{font-weight:600;white-space:nowrap}
+.pc-duty td.role{white-space:nowrap;color:var(--color-fg-muted)}
 </style>
 
 <div class="pc">
@@ -138,6 +141,28 @@ body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:var(-
     <p class="pc-take" id="takeaway">2026년 협의 <b class="dash-skeleton" data-source="s_kpi" data-field="값" data-where="구분=전체&amp;항목=전체">—</b>건 가운데 접수완료 후 아직 끝나지 않은 건은 <b class="dash-skeleton" data-source="s_kpi" data-field="값" data-where="구분=전체&amp;항목=진행 중">—</b>건입니다.</p>
     <p class="pc-asof">SIMS 수집 시각 <span id="asof-v" class="dash-skeleton" data-source="sims_2026" data-field="수집시각" data-row="0">—</span> · 사전협의목록 전체(중앙부처·지자체) 기준</p>
   </header>
+
+  <section class="pc-sec" id="sec-duty">
+    <h2>사전협의 검토 업무분장</h2>
+    <div class="pc-card" id="card-duty">
+      <div class="pc-tablebox" style="max-height:none">
+        <table class="pc-table pc-duty" id="tb-duty">
+          <thead><tr><th>담당자</th><th>업무</th><th>담당 분야</th></tr></thead>
+          <tbody>
+            <tr><td class="who" rowspan="2">김미정</td><td class="role">초안 검토</td><td>창업 · 수출 · 인력</td></tr>
+            <tr><td class="role">최종 검토</td><td>전 분야</td></tr>
+            <tr><td class="who">이정섭</td><td class="role">초안 검토</td><td>기술</td></tr>
+            <tr><td class="who">박해연</td><td class="role">초안 검토</td><td>금융 · 내수 · 소상공인</td></tr>
+            <tr><td class="who">윤의열</td><td class="role">초안 작성</td><td>경영 · 소상공인</td></tr>
+            <tr><td class="who">이은실</td><td class="role">초안 작성</td><td>금융 · 기술 · 인력</td></tr>
+            <tr><td class="who">신경희</td><td class="role">초안 작성</td><td>수출</td></tr>
+            <tr><td class="who">장채윤</td><td class="role">초안 작성</td><td>창업 · 내수</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="pc-note">초안 작성은 원드라이브 ① 초안, 초안 검토는 ② 초안_검토본, 최종 검토는 ④ 초안_검토_최종 폴더 단계입니다.</p>
+    </div>
+  </section>
 
   <div class="pc-filters" id="filters">
     <span class="lab">구분</span><div class="pc-chips" id="f-div" role="group" aria-label="구분"></div>
