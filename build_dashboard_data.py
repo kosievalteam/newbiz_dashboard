@@ -10,6 +10,7 @@ dashboard_data/cases_2026.csv → dashboard_data/dash_cases_2026.csv
   결과서 수령 날짜   = 검토완료일시          (결과통보일수 = 검토완료 - 검토의견등록)
   초안 작성 날짜     = 원드라이브 ① 초안 폴더에 그 협의건 파일이 처음 올라온 날
                        (① 에 없고 ③ 수정본 폴더에 있으면 ③ 에 처음 올라온 날)
+  검토본 작성 날짜   = 원드라이브 ② 초안_검토본 폴더의 담당자 폴더에 처음 올라온 날 (검토본담당자 = 그 폴더 이름)
   경과일             = 접수완료일부터 수집한 날까지의 날수 (대시보드 화면은 여는 날 기준으로 다시 계산)
 """
 import csv
@@ -51,6 +52,13 @@ def main():
                 d[f["협의번호"]] = min(f["업로드일"], d.get(f["협의번호"], "9999"))
     for k, v in revised.items():
         draft.setdefault(k, v)
+    # 원드라이브 ② 초안_검토본 폴더의 담당자 폴더(예: [금융] 박해연)에 처음 올라온 날 = 검토본 작성일
+    review, reviewer = {}, {}
+    if (D / "onedrive_files.csv").exists():
+        for f in csv.DictReader((D / "onedrive_files.csv").open(encoding="utf-8")):
+            if f["단계번호"] == "2" and f["협의번호"] and f["업로드일"] and f["담당자"] != "미분류":
+                review[f["협의번호"]] = min(f["업로드일"], review.get(f["협의번호"], "9999"))
+                reviewer.setdefault(f["협의번호"], set()).add(f["담당자"])
     for r in rows:
         a, b, c, e = ts(r["신청일시"]), ts(r["접수완료일시"]), ts(r["검토의견등록일시"]), ts(r["검토완료일시"])
         stage = r["진행단계"]
@@ -68,6 +76,8 @@ def main():
             "접수일": r["신청일시"][:10],
             "접수완료일": r["접수완료일시"][:10],
             "초안작성일": draft.get(r["협의번호"], ""),
+            "검토본담당자": "·".join(sorted(reviewer.get(r["협의번호"], ()))),
+            "검토본작성일": review.get(r["협의번호"], ""),
             "검토완료일": r["검토의견등록일시"][:10],
             "결과서수령일": r["검토완료일시"][:10],
             "접수월": r["신청일시"][:7],

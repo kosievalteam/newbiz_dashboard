@@ -141,6 +141,7 @@
             <th data-field="접수완료일"><button class="pc-th" type="button" data-k="접수완료일">접수완료</button></th>
             <th data-field="접수대기일수"><button class="pc-th" type="button" data-k="접수대기일수">접수 처리기간</button></th>
             <th data-field="초안작성일"><button class="pc-th" type="button" data-k="초안작성일">초안 작성</button></th>
+            <th data-field="검토본작성일"><button class="pc-th" type="button" data-k="검토본작성일">검토본</button></th>
             <th data-field="검토완료일"><button class="pc-th" type="button" data-k="검토완료일">검토완료</button></th>
             <th data-field="결과서수령일"><button class="pc-th" type="button" data-k="결과서수령일">결과서 수령</button></th>
             <th data-field="메모"><button class="pc-th" type="button" data-k="메모">메모</button></th>
@@ -148,7 +149,7 @@
           <tbody></tbody>
         </table>
       </div>
-      <p class="pc-note">접수는 신청일시, 접수완료는 접수대기에서 접수완료로 바뀐 일시, 접수 처리기간은 그 사이 날수, 초안 작성은 원드라이브 ① 초안 폴더에 그 협의건 파일이 처음 올라온 날(①에 파일이 없고 ③ 수정본 폴더에 있으면 ③에 처음 올라온 날, 두 폴더 모두 없으면 비워 둠, 9월 9일은 기존 파일을 한꺼번에 올린 날이라 실제 작성일과 다를 수 있음), 검토완료는 검토의견 등록일시, 결과서 수령은 검토결과(결과서) 등록일시입니다. 메모 날짜는 SIMS가 제공하지 않아, 수집할 때 메모가 처음 보이거나 바뀐 날을 적습니다.</p>
+      <p class="pc-note">접수는 신청일시, 접수완료는 접수대기에서 접수완료로 바뀐 일시, 접수 처리기간은 그 사이 날수, 초안 작성은 원드라이브 ① 초안 폴더에 그 협의건 파일이 처음 올라온 날(①에 파일이 없고 ③ 수정본 폴더에 있으면 ③에 처음 올라온 날, 두 폴더 모두 없으면 비워 둠, 9월 9일은 기존 파일을 한꺼번에 올린 날이라 실제 작성일과 다를 수 있음), 검토본은 원드라이브 ② 초안_검토본 폴더의 담당자 폴더(박해연·이정섭 등)에 그 협의건 파일이 처음 올라온 날, 검토완료는 검토의견 등록일시, 결과서 수령은 검토결과(결과서) 등록일시입니다. 메모 날짜는 SIMS가 제공하지 않아, 수집할 때 메모가 처음 보이거나 바뀐 날을 적습니다.</p>
     </div>
   </section>
 
@@ -262,11 +263,12 @@
     description: '원드라이브 단계 폴더(①~⑤)별로 협의건의 파일이 마지막으로 올라온 날. 협의번호가 2026인 파일만. 분야는 SIMS 신청분야.',
     fn: (onedrive_files, sims_2026) => {
       const fieldOf = new Map(sims_2026.map((r) => [r['협의번호'], r['신청분야']]));
+      const reviewerOf = new Map(sims_2026.map((r) => [r['협의번호'], r['검토본담당자']]));
       const cols = { '1': '초안', '2': '검토본', '3': '수정본', '4': '최종', '5': '시스템업로드' };
       const by = d3.group(onedrive_files.filter((r) => r['협의번호']), (r) => r['협의번호']);
       const out = [];
       for (const [no, v] of by) {
-        const row = { 협의번호: no, 담당자: v[0]['담당자'], 신청분야: fieldOf.get(no) || '', 사업명: v[0]['사업명'], SIMS단계: v[0]['SIMS단계'], 초안: '', 검토본: '', 수정본: '', 최종: '', 시스템업로드: '', 최근업로드: d3.max(v, (r) => r['업로드일']), 최종단계: d3.max(v, (r) => r['단계번호']) };
+        const row = { 협의번호: no, 담당자: v[0]['담당자'], 신청분야: fieldOf.get(no) || '', 검토본담당자: reviewerOf.get(no) || '', 사업명: v[0]['사업명'], SIMS단계: v[0]['SIMS단계'], 초안: '', 검토본: '', 수정본: '', 최종: '', 시스템업로드: '', 최근업로드: d3.max(v, (r) => r['업로드일']), 최종단계: d3.max(v, (r) => r['단계번호']) };
         const named = v.find((r) => r['담당자출처'] === '폴더'); if (named) row['담당자'] = named['담당자'];
         for (const [k, c] of Object.entries(cols)) { const f = v.filter((r) => r['단계번호'] === k); if (f.length) row[c] = d3.max(f, (r) => r['업로드일']); }
         out.push(row);
@@ -300,6 +302,9 @@
   const md = (s) => s ? s.slice(5).replace('-', '.') : '';
   // ---------- state ----------
   let rev = null, stage = '진행 중', div = '전체', field = '전체';
+  // 원드라이브 ② 초안_검토본 폴더에 올린 날로 따라가는 검토자
+  const REVIEWERS_2 = ['박해연', '이정섭'];
+  const byRev = (owner, reviewers) => !rev || owner === rev || (reviewers || '').split('·').includes(rev);
   const sorts = { 'tb-list': { k: '경과일', dir: -1 }, 'tb-od': { k: '최근업로드', dir: -1 }, 'tb-field': { k: '전체', dir: -1 } };
   function chips(boxId, items, cur, label, onPick) {
     const box = document.getElementById(boxId);
@@ -327,8 +332,8 @@
 
   // 엑셀 내려받기: 지금 화면에 걸러진 행을 그대로 받는다 (독립 웹페이지에서만 동작)
   let listRows = [], odRows = [];
-  const LIST_COLS = [['협의번호', '협의번호'], ['검토자', '검토담당자'], ['구분', '구분'], ['기관', '부처'], ['분야', '신청분야'], ['신청유형', '신청유형'], ['사업명', '사업명'], ['진행상태', '진행단계'], ['경과일', '경과일', 'n'], ['접수일', '접수일'], ['접수완료일', '접수완료일'], ['접수 처리기간(일)', '접수대기일수', 'n'], ['초안 작성일', '초안작성일'], ['검토완료일', '검토완료일'], ['검토일수', '검토일수', 'n'], ['결과서 수령일', '결과서수령일'], ['메모', '메모'], ['메모 확인일', '메모확인일'], ['반려사유', '반려사유']];
-  const OD_COLS = [['협의번호', '협의번호'], ['담당자', '담당자'], ['분야', '신청분야'], ['사업명', '사업명'], ['① 초안', '초안'], ['② 검토본', '검토본'], ['③ 수정본', '수정본'], ['④ 최종(팀장)', '최종'], ['⑤ 시스템 업로드', '시스템업로드'], ['최근 업로드', '최근업로드'], ['SIMS 상태', 'SIMS단계']];
+  const LIST_COLS = [['협의번호', '협의번호'], ['검토자', '검토담당자'], ['구분', '구분'], ['기관', '부처'], ['분야', '신청분야'], ['신청유형', '신청유형'], ['사업명', '사업명'], ['진행상태', '진행단계'], ['경과일', '경과일', 'n'], ['접수일', '접수일'], ['접수완료일', '접수완료일'], ['접수 처리기간(일)', '접수대기일수', 'n'], ['초안 작성일', '초안작성일'], ['검토본 담당자', '검토본담당자'], ['검토본 작성일', '검토본작성일'], ['검토완료일', '검토완료일'], ['검토일수', '검토일수', 'n'], ['결과서 수령일', '결과서수령일'], ['메모', '메모'], ['메모 확인일', '메모확인일'], ['반려사유', '반려사유']];
+  const OD_COLS = [['협의번호', '협의번호'], ['담당자', '담당자'], ['분야', '신청분야'], ['사업명', '사업명'], ['① 초안', '초안'], ['② 검토본', '검토본'], ['② 검토본 담당자', '검토본담당자'], ['③ 수정본', '수정본'], ['④ 최종(팀장)', '최종'], ['⑤ 시스템 업로드', '시스템업로드'], ['최근 업로드', '최근업로드'], ['SIMS 상태', 'SIMS단계']];
   const CRC = (() => { const tb = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; tb[n] = c >>> 0; } return (b) => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = tb[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }; })();
   // 압축하지 않은(stored) zip 묶음
   function zip(files) {
@@ -424,7 +429,7 @@
 
     // reviewers
     if (sr.status === 'ok') {
-      chips('f-rev', ['전체', ...sr.data.map((r) => r['검토담당자'])], rev || '전체', (p) => p, (p) => { rev = p === '전체' ? null : p; draw(); });
+      chips('f-rev', ['전체', ...sr.data.map((r) => r['검토담당자']), ...REVIEWERS_2.filter((p) => !sr.data.some((r) => r['검토담당자'] === p))], rev || '전체', (p) => p, (p) => { rev = p === '전체' ? null : p; draw(); });
     }
 
     // field
@@ -448,7 +453,7 @@
       const present = [...new Set(ds.data.map((r) => r['진행단계']))];
       chips('f-stage', ['진행 중', '전체', ...ORDER.filter((s) => present.includes(s)), ...present.filter((s) => !ORDER.includes(s)), '메모 있음'], stage, (s) => s, (s) => { stage = s; draw(); });
       const q = document.getElementById('list-q').value.trim().toLowerCase();
-      const rows = ds.data.filter((r) => (div === '전체' || r['구분'] === div) && (field === '전체' || r['신청분야'] === field) && (!rev || r['검토담당자'] === rev) &&
+      const rows = ds.data.filter((r) => (div === '전체' || r['구분'] === div) && (field === '전체' || r['신청분야'] === field) && byRev(r['검토담당자'], r['검토본담당자']) &&
         (stage === '전체' || (stage === '진행 중' ? OPEN.includes(r['진행단계']) : stage === '메모 있음' ? !!r['메모'] : r['진행단계'] === stage)) &&
         (!q || [r['사업명'], r['부처'], r['협의번호'], r['검토담당자'], r['신청분야'], r['메모']].join(' ').toLowerCase().includes(q)));
       const body = document.querySelector('#tb-list tbody'); body.textContent = '';
@@ -463,7 +468,7 @@
         const age = r['경과일'];
         if (age != null) { const s = document.createElement('span'); s.className = 'pc-age ' + ageClass(age); s.textContent = fmt(age) + '일'; td.appendChild(s); }
         tr.appendChild(td);
-        for (const k of ['접수일', '접수완료일', '접수대기일수', '초안작성일', '검토완료일', '결과서수령일']) {
+        for (const k of ['접수일', '접수완료일', '접수대기일수', '초안작성일', '검토본작성일', '검토완료일', '결과서수령일']) {
           td = document.createElement('td');
           if (k === '접수대기일수') { td.className = 'num'; const w = num(r[k]); td.textContent = w == null ? '' : f1(w) + '일'; }
           else { td.className = 'nowrap'; td.textContent = md(r[k]); }
@@ -481,7 +486,7 @@
     const od = dash.data('od_matrix');
     if (od.status === 'ok') {
       const q = document.getElementById('od-q').value.trim().toLowerCase();
-      const rows = od.data.filter((r) => (!rev || r['담당자'] === rev) && (field === '전체' || r['신청분야'] === field) && (!q || [r['사업명'], r['협의번호'], r['담당자'], r['신청분야']].join(' ').toLowerCase().includes(q)));
+      const rows = od.data.filter((r) => byRev(r['담당자'], r['검토본담당자']) && (field === '전체' || r['신청분야'] === field) && (!q || [r['사업명'], r['협의번호'], r['담당자'], r['신청분야']].join(' ').toLowerCase().includes(q)));
       const body = document.querySelector('#tb-od tbody'); body.textContent = '';
       const cols = ['초안', '검토본', '수정본', '최종', '시스템업로드'];
       odRows = sortRows('tb-od', rows);
