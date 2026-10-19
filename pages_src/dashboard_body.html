@@ -114,19 +114,6 @@
         </table>
       </div>
     </div>
-    <div class="pc-grid">
-      <div class="pc-card" id="card-month">
-        <h3 id="month-title">월별 처리 흐름</h3>
-        <p class="pc-note">달마다 접수(신청)된 건, 검토의견을 등록한 건, 결과서를 등록한 건의 수입니다.</p>
-        <div class="pc-legend" id="month-legend"></div>
-        <div class="pc-chart dash-skeleton" id="ch-month" data-source="s_month"></div>
-      </div>
-      <div class="pc-card" id="card-strip">
-        <h3>검토자별 검토일수</h3>
-        <p class="pc-note">점 하나가 협의건 하나입니다. 접수완료부터 검토의견 등록까지 걸린 날수이며, 세로선은 중앙값입니다.</p>
-        <div class="pc-chart dash-skeleton" id="ch-strip" data-source="sims_2026 s_rev"></div>
-      </div>
-    </div>
   </section>
 
   <section class="pc-sec" id="sec-list">
@@ -266,21 +253,6 @@
     }
   });
 
-  dash.calc('s_month', {
-    inputs: ['sims_2026'],
-    title: '월별 처리 흐름',
-    description: '검토자(전체 포함)·월별 접수, 검토의견 등록, 결과서 등록 건수.',
-    fn: (sims_2026) => {
-      const out = [];
-      const months = [...new Set(sims_2026.flatMap((r) => [r['접수월'], r['검토완료월'], r['결과서수령월']]).filter(Boolean))].sort();
-      for (const p of ['전체', ...new Set(sims_2026.map((r) => r['검토담당자']).filter((x) => x !== '미배정'))]) {
-        const v = p === '전체' ? sims_2026 : sims_2026.filter((r) => r['검토담당자'] === p);
-        for (const m of months) out.push({ 검토자: p, 월: m, 접수: v.filter((r) => r['접수월'] === m).length, 검토완료: v.filter((r) => r['검토완료월'] === m).length, 결과서수령: v.filter((r) => r['결과서수령월'] === m).length });
-      }
-      return out;
-    }
-  });
-
   dash.calc('od_matrix', {
     inputs: ['onedrive_files'],
     title: '협의건별 단계 폴더 업로드일',
@@ -322,65 +294,9 @@
   const ageOf = (r) => { if (!OPEN.includes(r['진행단계']) || !r['접수완료일']) return null; const p = r['접수완료일'].split('-').map(Number); return Math.round((TODAY - Date.UTC(p[0], p[1] - 1, p[2])) / 86400000); };
   const ageClass = (d) => d == null ? '' : d >= 60 ? 'bad' : d >= 30 ? 'warn' : '';
   const md = (s) => s ? s.slice(5).replace('-', '.') : '';
-  const MSERIES = [['접수', '접수'], ['검토완료', '검토의견 등록'], ['결과서수령', '결과서 등록']];
-  const lg = document.getElementById('month-legend');
-  MSERIES.forEach(([, name], i) => { const s = document.createElement('span'); const c = document.createElement('i'); c.style.background = dash.colors[i]; s.appendChild(c); s.appendChild(document.createTextNode(name)); lg.appendChild(s); });
-
-  function monthChart(el, card, rows) {
-    clearBox(el);
-    const W = Math.max(280, el.clientWidth), H = 230, m = { t: 12, r: 8, b: 26, l: 30 };
-    const svg = d3.select(el).append('svg').attr('width', '100%').attr('height', H).attr('viewBox', `0 0 ${W} ${H}`);
-    const months = rows.map((r) => r['월']);
-    const x = d3.scaleBand(months, [m.l, W - m.r]).paddingInner(0.25).paddingOuter(0.1);
-    const xs = d3.scaleBand(MSERIES.map((s) => s[0]), [0, x.bandwidth()]).padding(0.12);
-    const y = d3.scaleLinear([0, d3.max(rows, (r) => Math.max(...MSERIES.map((s) => r[s[0]]))) || 1], [H - m.b, m.t]).nice();
-    const cap = 'var(--cds-font-size-caption)';
-    y.ticks(4).filter((v) => Number.isInteger(v)).forEach((v) => {
-      svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(v)).attr('y2', y(v)).style('stroke', v === 0 ? 'var(--cds-chart-axis)' : 'var(--cds-chart-grid)');
-      svg.append('text').attr('x', m.l - 6).attr('y', y(v)).attr('dy', '0.35em').attr('text-anchor', 'end').style('font-size', cap).style('fill', 'var(--color-fg-muted)').text(v);
-    });
-    const step = Math.ceil(months.length / Math.max(1, Math.floor(W / 52)));
-    rows.forEach((r, i) => {
-      MSERIES.forEach(([k], j) => { const v = r[k]; if (!v) return; svg.append('rect').attr('x', x(r['월']) + xs(k)).attr('y', y(v)).attr('width', Math.min(18, xs.bandwidth())).attr('height', y(0) - y(v)).attr('rx', 3).style('fill', dash.colors[j]); });
-      if (i % step === 0) svg.append('text').attr('x', x(r['월']) + x.bandwidth() / 2).attr('y', H - 8).attr('text-anchor', 'middle').style('font-size', cap).style('fill', 'var(--color-fg-muted)').text(Number(r['월'].slice(5)) + '월');
-      svg.append('rect').attr('x', x(r['월'])).attr('y', m.t).attr('width', x.bandwidth()).attr('height', H - m.t - m.b).style('fill', 'transparent')
-        .on('mousemove', (ev) => showTip(card, ev, r['월'].replace('-', '년 ') + '월', MSERIES.map(([k, name], j) => [dash.colors[j], name, fmt(r[k]) + '건'])))
-        .on('mouseleave', () => hideTip(card));
-    });
-  }
-
-  function stripChart(el, card, rows, revRows, sel, onPick) {
-    clearBox(el);
-    const ppl = revRows.map((r) => r['검토담당자']);
-    const cap = 'var(--cds-font-size-caption)';
-    const W = Math.max(280, el.clientWidth), rowH = 30;
-    const svg = d3.select(el).append('svg').attr('width', '100%');
-    const labW = measure(svg, ppl) + 14;
-    const H = ppl.length * rowH + 26;
-    svg.attr('height', H).attr('viewBox', `0 0 ${W} ${H}`);
-    const vals = rows.map((r) => num(r['검토일수'])).filter((v) => v != null);
-    const x = d3.scaleLinear([0, Math.max(10, d3.max(vals) || 10)], [labW, W - 12]).nice();
-    x.ticks(5).forEach((v) => {
-      svg.append('line').attr('x1', x(v)).attr('x2', x(v)).attr('y1', 0).attr('y2', H - 22).style('stroke', 'var(--cds-chart-grid)');
-      svg.append('text').attr('x', x(v)).attr('y', H - 6).attr('text-anchor', 'middle').style('font-size', cap).style('fill', 'var(--color-fg-muted)').text(v + '일');
-    });
-    ppl.forEach((p, i) => {
-      const cy = i * rowH + rowH / 2, on = !sel || sel === p;
-      svg.append('text').attr('x', labW - 8).attr('y', cy).attr('dy', '0.35em').attr('text-anchor', 'end').style('font-size', cap).style('fill', 'var(--color-fg)').style('cursor', 'pointer').text(p).on('click', () => onPick(p));
-      rows.filter((r) => r['검토담당자'] === p && num(r['검토일수']) != null).forEach((r, k) => {
-        svg.append('circle').attr('cx', x(num(r['검토일수']))).attr('cy', cy + ((k * 7) % 11 - 5) * 1.4).attr('r', 4).style('fill', dash.colors[0]).style('fill-opacity', on ? 0.55 : 0.15)
-          .on('mousemove', (ev) => showTip(card, ev, r['협의번호'] + ' · ' + p, [[null, r['사업명'].slice(0, 26), ''], [null, '검토일수', f1(num(r['검토일수'])) + '일']]))
-          .on('mouseleave', () => hideTip(card));
-      });
-      const mdv = revRows[i]['검토일수중앙값'];
-      if (mdv != null) svg.append('line').attr('x1', x(mdv)).attr('x2', x(mdv)).attr('y1', cy - 11).attr('y2', cy + 11).style('stroke', 'var(--color-fg)').style('stroke-width', 2).style('opacity', on ? 1 : 0.3);
-    });
-  }
-
   // ---------- state ----------
   let rev = null, stage = '진행 중', div = '전체', field = '전체';
   const sorts = { 'tb-list': { k: '경과일', dir: -1 }, 'tb-od': { k: '최근업로드', dir: -1 }, 'tb-field': { k: '전체', dir: -1 } };
-  const toggleRev = (p) => { rev = rev === p ? null : p; draw(); };
   function chips(boxId, items, cur, label, onPick) {
     const box = document.getElementById(boxId);
     const sig = items.join('|');
@@ -464,15 +380,6 @@
     if (sr.status === 'ok') {
       chips('f-rev', ['전체', ...sr.data.map((r) => r['검토담당자'])], rev || '전체', (p) => p, (p) => { rev = p === '전체' ? null : p; draw(); });
     }
-
-    const sm = dash.data('s_month'), elM = document.getElementById('ch-month');
-    document.getElementById('month-title').textContent = (rev ? rev + ' · ' : '') + '월별 처리 흐름';
-    if (sm.status === 'ok') monthChart(elM, document.getElementById('card-month'), sm.data.filter((r) => r['검토자'] === (rev || '전체')));
-    else if (!isLoading(sm.status)) failBox(elM);
-
-    const elS = document.getElementById('ch-strip');
-    if (ds.status === 'ok' && sr.status === 'ok') stripChart(elS, document.getElementById('card-strip'), ds.data, sr.data, rev, toggleRev);
-    else if (!isLoading(ds.status) && !isLoading(sr.status)) failBox(elS);
 
     // field
     const sf = dash.data('s_field');
