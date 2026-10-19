@@ -415,6 +415,8 @@ body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:var(-
   let rev = null, stage = '진행 중', div = '전체', field = '전체';
   // 원드라이브 ② 초안_검토본 폴더에 올린 날로 따라가는 검토자
   const REVIEWERS_2 = ['박해연', '이정섭'];
+  // 퇴사·이동한 검토자는 칩에서만 뺀다(협의건 기록은 그대로)
+  const REVIEWERS_OFF = ['홍용미', '신지영'];
   const byRev = (owner, reviewers) => !rev || owner === rev || (reviewers || '').split('·').includes(rev);
   const sorts = { 'tb-list': { k: '경과일', dir: -1 }, 'tb-od': { k: '최근업로드', dir: -1 }, 'tb-field': { k: '전체', dir: -1 } };
   function chips(boxId, items, cur, label, onPick) {
@@ -540,7 +542,7 @@ body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:var(-
 
     // reviewers
     if (sr.status === 'ok') {
-      chips('f-rev', ['전체', ...sr.data.map((r) => r['검토담당자']), ...REVIEWERS_2.filter((p) => !sr.data.some((r) => r['검토담당자'] === p))], rev || '전체', (p) => p, (p) => { rev = p === '전체' ? null : p; draw(); });
+      chips('f-rev', ['전체', ...sr.data.map((r) => r['검토담당자']).filter((p) => !REVIEWERS_OFF.includes(p)), ...REVIEWERS_2.filter((p) => !sr.data.some((r) => r['검토담당자'] === p))], rev || '전체', (p) => p, (p) => { rev = p === '전체' ? null : p; draw(); });
     }
 
     // field
