@@ -50,7 +50,8 @@
 @media (max-width:640px){.pc-hide-sm{display:none}}
 [data-dash-source-state=empty]{color:transparent}
 [data-dash-source-state=refreshing]{opacity:.5;transition:opacity var(--cds-dur-slow)}
-</style><style>
+</style>
+<style>
 .pc-kpis.stage .pc-kpi{border-top:3px solid var(--pc-c, var(--color-border-line))}
 .pc-flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr));gap:var(--cds-gap-md)}
 .pc-step{display:flex;flex-direction:column;gap:2px;padding:var(--cds-pad-md);background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--cds-radius)}
@@ -123,7 +124,7 @@
         <input class="pc-search" id="list-q" type="search" placeholder="사업명·부처·메모로 찾기" aria-label="협의건 검색">
         <div class="pc-chips" id="f-stage" role="group" aria-label="진행상태"></div>
         <span class="pc-count" id="list-count"></span>
-        <button class="pc-chip" id="list-csv" type="button" hidden>CSV 내려받기</button>
+        <button class="pc-chip" id="list-xlsx" type="button" hidden>엑셀 내려받기</button>
       </div>
       <div class="pc-tablebox" style="max-height:34rem">
         <table class="pc-table" id="tb-list" data-source="sims_2026" data-row-key="협의번호">
@@ -155,8 +156,9 @@
     <h2>원드라이브 단계별 업로드</h2>
     <div class="pc-card" id="card-od">
       <div class="pc-tools">
-        <input class="pc-search" id="od-q" type="search" placeholder="사업명·협의번호로 찾기" aria-label="원드라이브 검색">
+        <input class="pc-search" id="od-q" type="search" placeholder="사업명·협의번호·분야로 찾기" aria-label="원드라이브 검색">
         <span class="pc-count" id="od-count"></span>
+        <button class="pc-chip" id="od-xlsx" type="button" hidden>엑셀 내려받기</button>
       </div>
       <p class="pc-note">'26년 검토의견서 폴더의 ①~⑤ 단계 폴더에 협의건별로 파일이 마지막으로 올라온 날입니다(한국 시각). 굵은 테두리는 그 건이 도달한 가장 뒤 단계입니다. 담당자 폴더가 없는 파일은 SIMS 검토담당자로 채웠습니다.</p>
       <div class="pc-tablebox" style="max-height:30rem">
@@ -164,6 +166,7 @@
           <thead><tr>
             <th data-field="협의번호"><button class="pc-th" type="button" data-k="협의번호">협의번호</button></th>
             <th data-field="담당자"><button class="pc-th" type="button" data-k="담당자">담당자</button></th>
+            <th data-field="신청분야"><button class="pc-th" type="button" data-k="신청분야">분야</button></th>
             <th data-field="사업명"><button class="pc-th" type="button" data-k="사업명">사업명</button></th>
             <th data-field="초안"><button class="pc-th" type="button" data-k="초안">① 초안</button></th>
             <th data-field="검토본"><button class="pc-th" type="button" data-k="검토본">② 검토본</button></th>
@@ -254,15 +257,16 @@
   });
 
   dash.calc('od_matrix', {
-    inputs: ['onedrive_files'],
+    inputs: ['onedrive_files', 'sims_2026'],
     title: '협의건별 단계 폴더 업로드일',
-    description: '원드라이브 단계 폴더(①~⑤)별로 협의건의 파일이 마지막으로 올라온 날. 협의번호가 2026인 파일만.',
-    fn: (onedrive_files) => {
+    description: '원드라이브 단계 폴더(①~⑤)별로 협의건의 파일이 마지막으로 올라온 날. 협의번호가 2026인 파일만. 분야는 SIMS 신청분야.',
+    fn: (onedrive_files, sims_2026) => {
+      const fieldOf = new Map(sims_2026.map((r) => [r['협의번호'], r['신청분야']]));
       const cols = { '1': '초안', '2': '검토본', '3': '수정본', '4': '최종', '5': '시스템업로드' };
       const by = d3.group(onedrive_files.filter((r) => r['협의번호']), (r) => r['협의번호']);
       const out = [];
       for (const [no, v] of by) {
-        const row = { 협의번호: no, 담당자: v[0]['담당자'], 사업명: v[0]['사업명'], SIMS단계: v[0]['SIMS단계'], 초안: '', 검토본: '', 수정본: '', 최종: '', 시스템업로드: '', 최근업로드: d3.max(v, (r) => r['업로드일']), 최종단계: d3.max(v, (r) => r['단계번호']) };
+        const row = { 협의번호: no, 담당자: v[0]['담당자'], 신청분야: fieldOf.get(no) || '', 사업명: v[0]['사업명'], SIMS단계: v[0]['SIMS단계'], 초안: '', 검토본: '', 수정본: '', 최종: '', 시스템업로드: '', 최근업로드: d3.max(v, (r) => r['업로드일']), 최종단계: d3.max(v, (r) => r['단계번호']) };
         const named = v.find((r) => r['담당자출처'] === '폴더'); if (named) row['담당자'] = named['담당자'];
         for (const [k, c] of Object.entries(cols)) { const f = v.filter((r) => r['단계번호'] === k); if (f.length) row[c] = d3.max(f, (r) => r['업로드일']); }
         out.push(row);
@@ -321,20 +325,62 @@
   })));
   document.getElementById('list-q').addEventListener('input', () => draw());
 
-  // 일정표 CSV 내려받기: 지금 화면에 걸러진 행을 그대로 받는다 (독립 웹페이지에서만 동작)
-  let listRows = [];
-  const CSV_COLS = [['협의번호', '협의번호'], ['검토자', '검토담당자'], ['구분', '구분'], ['기관', '부처'], ['분야', '신청분야'], ['신청유형', '신청유형'], ['사업명', '사업명'], ['진행상태', '진행단계'], ['경과일', '경과일'], ['접수일', '접수일'], ['접수완료일', '접수완료일'], ['접수 처리기간(일)', '접수대기일수'], ['초안 작성일', '초안작성일'], ['검토완료일', '검토완료일'], ['검토일수', '검토일수'], ['결과서 수령일', '결과서수령일'], ['메모', '메모'], ['메모 확인일', '메모확인일'], ['반려사유', '반려사유']];
-  const csvBtn = document.getElementById('list-csv');
-  if (window.__dashLoad) csvBtn.hidden = false;
-  csvBtn.addEventListener('click', () => {
-    const esc = (v) => { const s = v == null ? '' : String(v); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-    const lines = [CSV_COLS.map((c) => esc(c[0])).join(',')].concat(listRows.map((r) => CSV_COLS.map((c) => esc(r[c[1]])).join(',')));
-    const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
-    const n = new Date(), p2 = (x) => String(x).padStart(2, '0');
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-    a.download = '협의건_일정표_' + n.getFullYear() + p2(n.getMonth() + 1) + p2(n.getDate()) + '.csv';
+  // 엑셀 내려받기: 지금 화면에 걸러진 행을 그대로 받는다 (독립 웹페이지에서만 동작)
+  let listRows = [], odRows = [];
+  const LIST_COLS = [['협의번호', '협의번호'], ['검토자', '검토담당자'], ['구분', '구분'], ['기관', '부처'], ['분야', '신청분야'], ['신청유형', '신청유형'], ['사업명', '사업명'], ['진행상태', '진행단계'], ['경과일', '경과일', 'n'], ['접수일', '접수일'], ['접수완료일', '접수완료일'], ['접수 처리기간(일)', '접수대기일수', 'n'], ['초안 작성일', '초안작성일'], ['검토완료일', '검토완료일'], ['검토일수', '검토일수', 'n'], ['결과서 수령일', '결과서수령일'], ['메모', '메모'], ['메모 확인일', '메모확인일'], ['반려사유', '반려사유']];
+  const OD_COLS = [['협의번호', '협의번호'], ['담당자', '담당자'], ['분야', '신청분야'], ['사업명', '사업명'], ['① 초안', '초안'], ['② 검토본', '검토본'], ['③ 수정본', '수정본'], ['④ 최종(팀장)', '최종'], ['⑤ 시스템 업로드', '시스템업로드'], ['최근 업로드', '최근업로드'], ['SIMS 상태', 'SIMS단계']];
+  const CRC = (() => { const tb = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; tb[n] = c >>> 0; } return (b) => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = tb[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }; })();
+  // 압축하지 않은(stored) zip 묶음
+  function zip(files) {
+    const enc = new TextEncoder(), parts = [], cent = []; let off = 0;
+    const u16 = (v) => [v & 255, (v >>> 8) & 255], u32 = (v) => [v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255];
+    for (const [name, text] of files) {
+      const nb = enc.encode(name), db = enc.encode(text), crc = CRC(db);
+      const meta = [...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(db.length), ...u32(db.length), ...u16(nb.length), ...u16(0)];
+      const lh = new Uint8Array([...u32(0x04034b50), ...u16(20), ...meta]);
+      parts.push(lh, nb, db);
+      cent.push(new Uint8Array([...u32(0x02014b50), ...u16(20), ...u16(20), ...meta, ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(off)]), nb);
+      off += lh.length + nb.length + db.length;
+    }
+    const csize = cent.reduce((s, b) => s + b.length, 0);
+    const end = new Uint8Array([...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(files.length), ...u16(files.length), ...u32(csize), ...u32(off), ...u16(0)]);
+    return new Blob([...parts, ...cent, end], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  }
+  function xlsx(sheet, cols, rows) {
+    const x = (s) => String(s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const col = (c) => { let s = ''; for (c++; c > 0; c = Math.floor((c - 1) / 26)) s = String.fromCharCode(65 + (c - 1) % 26) + s; return s; };
+    const cell = (c, r, v, num, st) => {
+      if (v == null || v === '') return '';
+      const n = num ? Number(v) : NaN;
+      return Number.isFinite(n) ? `<c r="${col(c)}${r}"${st}><v>${n}</v></c>` : `<c r="${col(c)}${r}"${st} t="inlineStr"><is><t xml:space="preserve">${x(v)}</t></is></c>`;
+    };
+    const body = [`<row r="1">${cols.map((c, i) => cell(i, 1, c[0], false, ' s="1"')).join('')}</row>`]
+      .concat(rows.map((r, j) => `<row r="${j + 2}">${cols.map((c, i) => cell(i, j + 2, r[c[1]], c[2] === 'n', '')).join('')}</row>`));
+    const wid = (s) => [...s].reduce((w, ch) => w + (ch.charCodeAt(0) > 255 ? 2 : 1), 0);
+    const width = (c) => Math.min(60, Math.max(8, wid(c[0]) + 4, ...rows.map((r) => wid(r[c[1]] == null ? '' : String(r[c[1]])) + 2)));
+    const lastCol = col(cols.length - 1), lastRow = rows.length + 1;
+    const ws = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>${cols.map((c, i) => `<col min="${i + 1}" max="${i + 1}" width="${width(c)}" customWidth="1"/>`).join('')}</cols><sheetData>${body.join('')}</sheetData><autoFilter ref="A1:${lastCol}${lastRow}"/></worksheet>`;
+    const wb = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${x(sheet)}" sheetId="1" r:id="rId1"/></sheets><definedNames><definedName name="_xlnm._FilterDatabase" localSheetId="0" hidden="1">'${x(sheet)}'!$A$1:$${lastCol}$${lastRow}</definedName></definedNames></workbook>`;
+    return zip([
+      ['[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'],
+      ['_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
+      ['xl/workbook.xml', wb],
+      ['xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'],
+      ['xl/worksheets/sheet1.xml', ws],
+      ['xl/styles.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="맑은 고딕"/></font><font><b/><sz val="11"/><name val="맑은 고딕"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE7EEF7"/></patternFill></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf/></cellStyleXfs><cellXfs count="2"><xf xfId="0"/><xf xfId="0" fontId="1" fillId="2" applyFont="1" applyFill="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>'],
+    ]);
+  }
+  function saveXlsx(base, sheet, cols, rows) {
+    const n = new Date(), p2 = (v) => String(v).padStart(2, '0');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(xlsx(sheet, cols, rows));
+    a.download = base + '_' + n.getFullYear() + p2(n.getMonth() + 1) + p2(n.getDate()) + '.xlsx';
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-  });
+  }
+  for (const [id, fn] of [['list-xlsx', () => saveXlsx('협의건_일정표', '협의건 일정표', LIST_COLS, listRows)], ['od-xlsx', () => saveXlsx('원드라이브_단계별_업로드', '원드라이브 단계별 업로드', OD_COLS, odRows)]]) {
+    const b = document.getElementById(id);
+    if (window.__dashLoad) b.hidden = false;
+    b.addEventListener('click', fn);
+  }
   document.getElementById('od-q').addEventListener('input', () => draw());
 
   function draw() {
@@ -435,17 +481,18 @@
     const od = dash.data('od_matrix');
     if (od.status === 'ok') {
       const q = document.getElementById('od-q').value.trim().toLowerCase();
-      const rows = od.data.filter((r) => (!rev || r['담당자'] === rev) && (!q || [r['사업명'], r['협의번호'], r['담당자']].join(' ').toLowerCase().includes(q)));
+      const rows = od.data.filter((r) => (!rev || r['담당자'] === rev) && (field === '전체' || r['신청분야'] === field) && (!q || [r['사업명'], r['협의번호'], r['담당자'], r['신청분야']].join(' ').toLowerCase().includes(q)));
       const body = document.querySelector('#tb-od tbody'); body.textContent = '';
       const cols = ['초안', '검토본', '수정본', '최종', '시스템업로드'];
-      for (const r of sortRows('tb-od', rows)) {
+      odRows = sortRows('tb-od', rows);
+      for (const r of odRows) {
         const tr = document.createElement('tr');
-        for (const [k, cls] of [['협의번호', 'nowrap'], ['담당자', 'nowrap'], ['사업명', 'wrap']]) { const td = document.createElement('td'); td.className = cls; td.textContent = r[k]; tr.appendChild(td); }
+        for (const [k, cls] of [['협의번호', 'nowrap'], ['담당자', 'nowrap'], ['신청분야', 'nowrap'], ['사업명', 'wrap']]) { const td = document.createElement('td'); td.className = cls; td.textContent = r[k]; tr.appendChild(td); }
         cols.forEach((c, i) => { const td = document.createElement('td'); td.className = 'nowrap'; if (r[c]) { const s = document.createElement('span'); s.className = 'pc-od' + (String(i + 1) === String(r['최종단계']) ? ' last' : ''); s.textContent = md(r[c]); td.appendChild(s); } tr.appendChild(td); });
         const td = document.createElement('td'); td.className = 'nowrap pc-hide-sm'; td.textContent = r['SIMS단계']; tr.appendChild(td);
         body.appendChild(tr);
       }
-      document.getElementById('od-count').textContent = (rev ? rev + ' · ' : '') + fmt(rows.length) + '건';
+      document.getElementById('od-count').textContent = [field === '전체' ? null : field, rev, fmt(rows.length) + '건'].filter(Boolean).join(' · ');
     }
   }
 
