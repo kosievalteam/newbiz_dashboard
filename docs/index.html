@@ -183,7 +183,7 @@ body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:var(-
     <h2>처리 현황</h2>
     <div class="pc-card" id="card-field">
       <h3>분야별 건수</h3>
-      <p class="pc-note">신청분야별 진행상태입니다. 행을 누르면 일정표가 그 분야로 바뀝니다.</p>
+      <p class="pc-note">신청분야별 진행상태입니다. <b>구분·검토자 거르개를 따라</b> 협의건 일정표와 같은 기준으로 셉니다. 행을 누르면 일정표가 그 분야로 바뀝니다.</p>
       <div class="pc-tablebox" style="max-height:none">
         <table class="pc-table" id="tb-field" data-source="s_field" data-row-key="신청분야">
           <thead><tr>
@@ -356,7 +356,7 @@ body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:var(-
   dash.calc('s_field', {
     inputs: ['sims_2026'],
     title: '분야별 건수',
-    description: '신청분야별 전체, 진행 중(접수완료·검토진행·재협의), 접수완료, 검토진행, 협의완료(재협의완료 포함), 접수반려 건수와 그 분야를 가장 많이 맡은 검토자.',
+    description: '신청분야별 전체, 진행 중(접수완료·검토진행·재협의), 접수완료, 검토진행, 협의완료(재협의완료 포함), 접수반려 건수와 그 분야를 가장 많이 맡은 검토자. 거르개를 걸지 않은 전체 기준이며, 화면의 표는 구분·검토자를 반영해 다시 셉니다.',
     fn: (sims_2026) => {
       const out = [];
       for (const f of new Set(sims_2026.map((r) => r['신청분야']))) {
@@ -550,9 +550,28 @@ body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:var(-
     // field
     const sf = dash.data('s_field');
     if (sf.status === 'ok') {
+      //  칩 목록은 **전체 기준**으로 둡니다 - 구분을 바꿀 때마다 분야가 사라지면 고르던 것이 풀립니다.
       chips('f-field', ['전체', ...sf.data.map((r) => r['신청분야'])], field, (s) => s, (s) => { field = s; draw(); });
+      //  건수는 **협의건 일정표와 같은 기준**으로 셉니다 - 구분·검토자 거르개를 따라갑니다.
+      //  분야·진행상태·검색어는 넣지 않습니다. 이 표가 분야를 나누고 상태를 나누어 보여 주는 표라,
+      //  그 둘로 거르면 표 자체가 뜻을 잃습니다.
+      const fbase = (ds.status === 'ok' ? ds.data : []).filter((r) =>
+        (div === '전체' || r['구분'] === div) && byRev(r['검토담당자'], r['검토본담당자']));
+      const fieldRows = sf.data.map((f0) => {
+        const v = fbase.filter((x) => x['신청분야'] === f0['신청분야']);
+        const n = (st) => v.filter((x) => x['진행단계'] === st).length;
+        const top = [...d3.rollup(v.filter((x) => x['검토담당자'] !== '미배정'), (g) => g.length, (x) => x['검토담당자'])].sort((a, b) => b[1] - a[1])[0];
+        return {
+          신청분야: f0['신청분야'], 전체: v.length,
+          진행중: n('접수완료') + n('검토진행') + n('재협의대기') + n('재협의진행'),
+          접수완료: n('접수완료'), 검토진행: n('검토진행'),
+          협의완료: n('협의완료(원안동의)') + n('협의완료(권고안제시)') + n('재협의완료'),
+          접수반려: n('접수반려'),
+          담당자: top ? top[0] + ' ' + top[1] + '건' : ''
+        };
+      });
       const body = document.querySelector('#tb-field tbody'); body.textContent = '';
-      for (const r of sortRows('tb-field', sf.data)) {
+      for (const r of sortRows('tb-field', fieldRows)) {
         const tr = document.createElement('tr'); tr.className = 'pc-rowbtn' + (field === r['신청분야'] ? ' sel' : ''); tr.tabIndex = 0;
         const pick = () => { field = field === r['신청분야'] ? '전체' : r['신청분야']; draw(); };
         tr.addEventListener('click', pick); tr.addEventListener('keydown', (e) => { if (e.key === 'Enter') pick(); });
