@@ -414,13 +414,13 @@ body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:var(-
   const ageClass = (d) => d == null ? '' : d >= 60 ? 'bad' : d >= 30 ? 'warn' : '';
   const md = (s) => s ? s.slice(5).replace('-', '.') : '';
   // ---------- state ----------
-  let rev = null, stage = '진행 중', div = '전체', field = '전체';
+  let rev = null, stage = '검토완료 전', div = '전체', field = '전체';
   // 원드라이브 ② 초안_검토본 폴더에 올린 날로 따라가는 검토자
   const REVIEWERS_2 = ['박해연', '이정섭'];
   // 퇴사·이동한 검토자는 칩에서만 뺀다(협의건 기록은 그대로)
   const REVIEWERS_OFF = ['홍용미', '신지영'];
   const byRev = (owner, reviewers) => !rev || owner === rev || (reviewers || '').split('·').includes(rev);
-  const sorts = { 'tb-list': { k: '경과일', dir: -1 }, 'tb-od': { k: '최근업로드', dir: -1 }, 'tb-field': { k: '전체', dir: -1 } };
+  const sorts = { 'tb-list': { k: '접수완료일', dir: 1 }, 'tb-od': { k: '최근업로드', dir: -1 }, 'tb-field': { k: '전체', dir: -1 } };
   function chips(boxId, items, cur, label, onPick) {
     const box = document.getElementById(boxId);
     const sig = items.join('|');
@@ -585,10 +585,10 @@ body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:var(-
     // schedule list
     if (ds.status === 'ok') {
       const present = [...new Set(ds.data.map((r) => r['진행단계']))];
-      chips('f-stage', ['진행 중', '전체', ...ORDER.filter((s) => present.includes(s)), ...present.filter((s) => !ORDER.includes(s)), '메모 있음'], stage, (s) => s, (s) => { stage = s; draw(); });
+      chips('f-stage', ['검토완료 전', '진행 중', '전체', ...ORDER.filter((s) => present.includes(s)), ...present.filter((s) => !ORDER.includes(s)), '메모 있음'], stage, (s) => s, (s) => { stage = s; draw(); });
       const q = document.getElementById('list-q').value.trim().toLowerCase();
       const rows = ds.data.filter((r) => (div === '전체' || r['구분'] === div) && (field === '전체' || r['신청분야'] === field) && byRev(r['검토담당자'], r['검토본담당자']) &&
-        (stage === '전체' || (stage === '진행 중' ? OPEN.includes(r['진행단계']) : stage === '메모 있음' ? !!r['메모'] : r['진행단계'] === stage)) &&
+        (stage === '전체' || (stage === '검토완료 전' ? (!r['검토완료일'] && r['진행단계'] !== '접수반려') : stage === '진행 중' ? OPEN.includes(r['진행단계']) : stage === '메모 있음' ? !!r['메모'] : r['진행단계'] === stage)) &&
         (!q || [r['사업명'], r['부처'], r['협의번호'], r['검토담당자'], r['신청분야'], r['메모']].join(' ').toLowerCase().includes(q)));
       const body = document.querySelector('#tb-list tbody'); body.textContent = '';
       listRows = sortRows('tb-list', rows.map((r) => ({ ...r, 경과일: ageOf(r) })));
