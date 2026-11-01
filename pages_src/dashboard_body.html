@@ -188,7 +188,7 @@
         <span class="pc-count" id="od-count"></span>
         <button class="pc-chip" id="od-xlsx" type="button" hidden>엑셀 내려받기</button>
       </div>
-      <p class="pc-note">'26년 검토의견서 폴더의 ①~⑤ 단계 폴더에 협의건별로 파일이 마지막으로 올라온 날입니다(한국 시각). 굵은 테두리는 그 건이 도달한 가장 뒤 단계입니다. 담당자 폴더가 없는 파일은 SIMS 검토담당자로 채웠습니다.</p>
+      <p class="pc-note">'26년 검토의견서 폴더의 ①~⑤ 단계 폴더에 협의건별로 파일이 마지막으로 올라온 날입니다(한국 시각). 굵은 테두리는 그 건이 도달한 가장 뒤 단계입니다. 접수완료는 SIMS의 접수완료일입니다. 담당자 폴더가 없는 파일은 SIMS 검토담당자로 채웠습니다.</p>
       <div class="pc-tablebox" style="max-height:30rem">
         <table class="pc-table" id="tb-od" data-source="od_matrix" data-row-key="협의번호">
           <thead><tr>
@@ -196,6 +196,7 @@
             <th data-field="담당자"><button class="pc-th" type="button" data-k="담당자">담당자</button></th>
             <th data-field="신청분야"><button class="pc-th" type="button" data-k="신청분야">분야</button></th>
             <th data-field="사업명"><button class="pc-th" type="button" data-k="사업명">사업명</button></th>
+            <th data-field="접수완료일"><button class="pc-th" type="button" data-k="접수완료일">접수완료</button></th>
             <th data-field="초안"><button class="pc-th" type="button" data-k="초안">① 초안</button></th>
             <th data-field="검토본"><button class="pc-th" type="button" data-k="검토본">② 검토본</button></th>
             <th data-field="수정본"><button class="pc-th" type="button" data-k="수정본">③ 수정본</button></th>
@@ -291,11 +292,12 @@
     fn: (onedrive_files, sims_2026) => {
       const fieldOf = new Map(sims_2026.map((r) => [r['협의번호'], r['신청분야']]));
       const reviewerOf = new Map(sims_2026.map((r) => [r['협의번호'], r['검토본담당자']]));
+      const acceptOf = new Map(sims_2026.map((r) => [r['협의번호'], r['접수완료일']]));
       const cols = { '1': '초안', '2': '검토본', '3': '수정본', '4': '최종', '5': '시스템업로드' };
       const by = d3.group(onedrive_files.filter((r) => r['협의번호']), (r) => r['협의번호']);
       const out = [];
       for (const [no, v] of by) {
-        const row = { 협의번호: no, 담당자: v[0]['담당자'], 신청분야: fieldOf.get(no) || '', 검토본담당자: reviewerOf.get(no) || '', 사업명: v[0]['사업명'], SIMS단계: v[0]['SIMS단계'], 초안: '', 검토본: '', 수정본: '', 최종: '', 시스템업로드: '', 최근업로드: d3.max(v, (r) => r['업로드일']), 최종단계: d3.max(v, (r) => r['단계번호']) };
+        const row = { 협의번호: no, 담당자: v[0]['담당자'], 신청분야: fieldOf.get(no) || '', 검토본담당자: reviewerOf.get(no) || '', 접수완료일: acceptOf.get(no) || '', 사업명: v[0]['사업명'], SIMS단계: v[0]['SIMS단계'], 초안: '', 검토본: '', 수정본: '', 최종: '', 시스템업로드: '', 최근업로드: d3.max(v, (r) => r['업로드일']), 최종단계: d3.max(v, (r) => r['단계번호']) };
         const named = v.find((r) => r['담당자출처'] === '폴더'); if (named) row['담당자'] = named['담당자'];
         for (const [k, c] of Object.entries(cols)) { const f = v.filter((r) => r['단계번호'] === k); if (f.length) row[c] = d3.max(f, (r) => r['업로드일']); }
         out.push(row);
@@ -362,7 +364,7 @@
   // 엑셀 내려받기: 지금 화면에 걸러진 행을 그대로 받는다 (독립 웹페이지에서만 동작)
   let listRows = [], odRows = [];
   const LIST_COLS = [['협의번호', '협의번호'], ['검토자', '검토담당자'], ['구분', '구분'], ['기관', '부처'], ['분야', '신청분야'], ['신청유형', '신청유형'], ['사업명', '사업명'], ['진행상태', '진행단계'], ['경과일', '경과일', 'n'], ['접수일', '접수일'], ['접수완료일', '접수완료일'], ['접수 처리기간(일)', '접수대기일수', 'n'], ['초안 작성일', '초안작성일'], ['검토본 담당자', '검토본담당자'], ['검토본 작성일', '검토본작성일'], ['검토완료일', '검토완료일'], ['검토일수', '검토일수', 'n'], ['결과서 수령일', '결과서수령일'], ['메모', '메모'], ['메모 확인일', '메모확인일'], ['반려사유', '반려사유']];
-  const OD_COLS = [['협의번호', '협의번호'], ['담당자', '담당자'], ['분야', '신청분야'], ['사업명', '사업명'], ['① 초안', '초안'], ['② 검토본', '검토본'], ['② 검토본 담당자', '검토본담당자'], ['③ 수정본', '수정본'], ['④ 최종(팀장)', '최종'], ['⑤ 시스템 업로드', '시스템업로드'], ['최근 업로드', '최근업로드'], ['SIMS 상태', 'SIMS단계']];
+  const OD_COLS = [['협의번호', '협의번호'], ['담당자', '담당자'], ['분야', '신청분야'], ['사업명', '사업명'], ['접수완료일', '접수완료일'], ['① 초안', '초안'], ['② 검토본', '검토본'], ['② 검토본 담당자', '검토본담당자'], ['③ 수정본', '수정본'], ['④ 최종(팀장)', '최종'], ['⑤ 시스템 업로드', '시스템업로드'], ['최근 업로드', '최근업로드'], ['SIMS 상태', 'SIMS단계']];
   const CRC = (() => { const tb = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; tb[n] = c >>> 0; } return (b) => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = tb[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }; })();
   // 압축하지 않은(stored) zip 묶음
   function zip(files) {
@@ -541,6 +543,7 @@
       for (const r of odRows) {
         const tr = document.createElement('tr');
         for (const [k, cls] of [['협의번호', 'nowrap'], ['담당자', 'nowrap'], ['신청분야', 'nowrap'], ['사업명', 'wrap']]) { const td = document.createElement('td'); td.className = cls; td.textContent = r[k]; tr.appendChild(td); }
+        { const td = document.createElement('td'); td.className = 'nowrap'; td.textContent = md(r['접수완료일']); tr.appendChild(td); }
         cols.forEach((c, i) => { const td = document.createElement('td'); td.className = 'nowrap'; if (r[c]) { const s = document.createElement('span'); s.className = 'pc-od' + (String(i + 1) === String(r['최종단계']) ? ' last' : ''); s.textContent = md(r[c]); td.appendChild(s); } tr.appendChild(td); });
         const td = document.createElement('td'); td.className = 'nowrap pc-hide-sm'; td.textContent = r['SIMS단계']; tr.appendChild(td);
         body.appendChild(tr);
