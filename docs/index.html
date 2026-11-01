@@ -202,6 +202,36 @@ body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:var(-
     </div>
   </section>
 
+  <section class="pc-sec" id="sec-od">
+    <h2>원드라이브 단계별 업로드</h2>
+    <div class="pc-card" id="card-od">
+      <div class="pc-tools">
+        <input class="pc-search" id="od-q" type="search" placeholder="사업명·협의번호·분야로 찾기" aria-label="원드라이브 검색">
+        <span class="pc-count" id="od-count"></span>
+        <button class="pc-chip" id="od-xlsx" type="button" hidden>엑셀 내려받기</button>
+      </div>
+      <p class="pc-note">'26년 검토의견서 폴더의 ①~⑤ 단계 폴더에 협의건별로 파일이 마지막으로 올라온 날입니다(한국 시각). 굵은 테두리는 그 건이 도달한 가장 뒤 단계입니다. 접수완료는 SIMS의 접수완료일입니다. 담당자 폴더가 없는 파일은 SIMS 검토담당자로 채웠습니다.</p>
+      <div class="pc-tablebox" style="max-height:30rem">
+        <table class="pc-table" id="tb-od" data-source="od_matrix" data-row-key="협의번호">
+          <thead><tr>
+            <th data-field="협의번호"><button class="pc-th" type="button" data-k="협의번호">협의번호</button></th>
+            <th data-field="담당자"><button class="pc-th" type="button" data-k="담당자">담당자</button></th>
+            <th data-field="신청분야"><button class="pc-th" type="button" data-k="신청분야">분야</button></th>
+            <th data-field="사업명"><button class="pc-th" type="button" data-k="사업명">사업명</button></th>
+            <th data-field="접수완료일"><button class="pc-th" type="button" data-k="접수완료일">접수완료</button></th>
+            <th data-field="초안"><button class="pc-th" type="button" data-k="초안">① 초안</button></th>
+            <th data-field="검토본"><button class="pc-th" type="button" data-k="검토본">② 검토본</button></th>
+            <th data-field="수정본"><button class="pc-th" type="button" data-k="수정본">③ 수정본</button></th>
+            <th data-field="최종"><button class="pc-th" type="button" data-k="최종">④ 최종(팀장)</button></th>
+            <th data-field="시스템업로드"><button class="pc-th" type="button" data-k="시스템업로드">⑤ 시스템 업로드</button></th>
+            <th data-field="SIMS단계" class="pc-hide-sm"><button class="pc-th" type="button" data-k="SIMS단계">SIMS 상태</button></th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
   <section class="pc-sec" id="sec-list">
     <h2>협의건 일정표</h2>
     <div class="pc-card" id="card-list">
@@ -235,36 +265,6 @@ body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:var(-
         </table>
       </div>
       <p class="pc-note">접수는 신청일시, 접수완료는 접수대기에서 접수완료로 바뀐 일시, 접수 처리기간은 그 사이 날수, 초안 작성은 원드라이브 ① 초안 폴더에 그 협의건 파일이 처음 올라온 날(①에 파일이 없고 ③ 수정본 폴더에 있으면 ③에 처음 올라온 날, 두 폴더 모두 없으면 비워 둠, 9월 9일은 기존 파일을 한꺼번에 올린 날이라 실제 작성일과 다를 수 있음), 검토본은 원드라이브 ② 초안_검토본 폴더의 담당자 폴더(박해연·이정섭 등)에 그 협의건 파일이 처음 올라온 날, 검토완료는 검토의견 등록일시, 결과서 수령은 검토결과(결과서) 등록일시입니다. 메모 날짜는 SIMS가 제공하지 않아, 수집할 때 메모가 처음 보이거나 바뀐 날을 적습니다.</p>
-    </div>
-  </section>
-
-  <section class="pc-sec" id="sec-od">
-    <h2>원드라이브 단계별 업로드</h2>
-    <div class="pc-card" id="card-od">
-      <div class="pc-tools">
-        <input class="pc-search" id="od-q" type="search" placeholder="사업명·협의번호·분야로 찾기" aria-label="원드라이브 검색">
-        <span class="pc-count" id="od-count"></span>
-        <button class="pc-chip" id="od-xlsx" type="button" hidden>엑셀 내려받기</button>
-      </div>
-      <p class="pc-note">'26년 검토의견서 폴더의 ①~⑤ 단계 폴더에 협의건별로 파일이 마지막으로 올라온 날입니다(한국 시각). 굵은 테두리는 그 건이 도달한 가장 뒤 단계입니다. 접수완료는 SIMS의 접수완료일입니다. 담당자 폴더가 없는 파일은 SIMS 검토담당자로 채웠습니다.</p>
-      <div class="pc-tablebox" style="max-height:30rem">
-        <table class="pc-table" id="tb-od" data-source="od_matrix" data-row-key="협의번호">
-          <thead><tr>
-            <th data-field="협의번호"><button class="pc-th" type="button" data-k="협의번호">협의번호</button></th>
-            <th data-field="담당자"><button class="pc-th" type="button" data-k="담당자">담당자</button></th>
-            <th data-field="신청분야"><button class="pc-th" type="button" data-k="신청분야">분야</button></th>
-            <th data-field="사업명"><button class="pc-th" type="button" data-k="사업명">사업명</button></th>
-            <th data-field="접수완료일"><button class="pc-th" type="button" data-k="접수완료일">접수완료</button></th>
-            <th data-field="초안"><button class="pc-th" type="button" data-k="초안">① 초안</button></th>
-            <th data-field="검토본"><button class="pc-th" type="button" data-k="검토본">② 검토본</button></th>
-            <th data-field="수정본"><button class="pc-th" type="button" data-k="수정본">③ 수정본</button></th>
-            <th data-field="최종"><button class="pc-th" type="button" data-k="최종">④ 최종(팀장)</button></th>
-            <th data-field="시스템업로드"><button class="pc-th" type="button" data-k="시스템업로드">⑤ 시스템 업로드</button></th>
-            <th data-field="SIMS단계" class="pc-hide-sm"><button class="pc-th" type="button" data-k="SIMS단계">SIMS 상태</button></th>
-          </tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
     </div>
   </section>
 </div>
